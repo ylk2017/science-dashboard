@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SciQuest — Integrated Science Skill Mastery Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --bg:#0b1020;--bg2:#0e1428;--panel:#141d33;--panel2:#1a2440;--line:#26304d;
+    --text:#e9edf8;--muted:#93a0bd;--muted2:#6b769a;--accent:#7c9cff;
+    --up:#22c55e;--down:#f0555f;--flat:#8a97b8;
+    --R:#8b5cf6;--E:#10b981;--D:#f59e0b;--ENG:#fb7185;
+    --nov:#94a3b8;--app:#f59e0b;--adp:#3b82f6;--exp:#22c55e;--mas:#a855f7;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:radial-gradient(1200px 700px at 20% -10%,#182246 0%,var(--bg) 55%);color:var(--text);
+    font-family:"Segoe UI",Roboto,-apple-system,system-ui,"Noto Sans HK",sans-serif;line-height:1.45;min-height:100vh}
+  button{font-family:inherit;cursor:pointer}
+  .muted{color:var(--muted)}
+  .small{font-size:12px}
+  /* Top bar */
+  .topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:10px 16px;background:linear-gradient(180deg,rgba(16,22,44,.96),rgba(16,22,44,.86));
+    backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:10px}
+  .logo{font-size:26px;filter:drop-shadow(0 0 6px #7c9cff88)}
+  .t1{font-weight:800;font-size:18px;letter-spacing:.3px}
+  .t2{font-size:11px;color:var(--muted)}
+  .actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .btn{background:linear-gradient(180deg,#2a3committed,#243258);background:linear-gradient(180deg,#31406e,#243258);
+    color:#fff;border:1px solid #3a4a7d;border-radius:10px;padding:9px 12px;font-weight:600;font-size:13px;white-space:nowrap}
+  .btn:hover{filter:brightness(1.12)}
+  .btn.ghost{background:transparent;border-color:var(--line);color:var(--text)}
+  .btn.danger{color:#ffd7da;border-color:#5a2730;background:linear-gradient(180deg,#5a2730,#3a1a20)}
+  .menu{position:relative}
+  .menu-pop{position:absolute;right:0;top:44px;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:6px;display:flex;flex-direction:column;min-width:200px;box-shadow:0 18px 40px #0008;z-index:50}
+  .menu-pop button{background:transparent;border:0;color:var(--text);text-align:left;padding:9px 10px;border-radius:8px;font-size:13px}
+  .menu-pop button:hover{background:var(--panel2)}
+  .menu-pop button.danger{color:#ff9aa2}
+  .hint{margin:10px 16px 0;background:#152039;border:1px solid var(--line);color:var(--muted);
+    border-radius:10px;padding:8px 12px;font-size:12px;display:flex;gap:8px;align-items:center;justify-content:space-between}
+  .hint .x{background:transparent;border:0;color:var(--muted);font-size:16px}
+  .banner{margin:10px 16px 0;background:linear-gradient(90deg,#2a2150,#1a2440);border:1px solid #45379a;color:#d9d2ff;
+    border-radius:10px;padding:8px 12px;font-size:12.5px}
+  main{max-width:1120px;margin:0 auto;padding:16px}
+  /* Roster */
+  .sectionhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .h{font-size:20px;font-weight:800}
+  .statstrip{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;min-width:120px;flex:1}
+  .kpi .n{font-size:22px;font-weight:800}
+  .kpi .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .controls input,.controls select{background:var(--panel2);border:1px solid var(--line);color:var(--text);
+    border-radius:9px;padding:9px 11px;font-size:13px;font-family:inherit}
+  .controls input{flex:1;min-width:180px}
+  .roster-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+  .scard{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:14px;
+    padding:14px;cursor:pointer;transition:transform .12s,border-color .12s,box-shadow .12s}
+  .scard:hover{transform:translateY(-3px);border-color:#3d4d84;box-shadow:0 12px 30px #0006}
+  .scard-top{display:flex;gap:11px;align-items:center}
+  .avatar{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:18px;color:#0b1020;flex:none}
+  .sinfo{flex:1;min-width:0}
+  .sname{font-weight:700;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .smeta{font-size:11px;color:var(--muted)}
+  .savg{text-align:right;flex:none}
+  .savg .big{font-size:20px;font-weight:800}
+  .rankpill{font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;color:#0b1020;display:inline-block}
+  .minibars{margin-top:12px;display:grid;gap:6px}
+  .mb{display:flex;align-items:center;gap:8px}
+  .mbl{width:34px;font-size:10px;font-weight:800}
+  .mbt{flex:1;height:8px;background:#0c1striped;background:#0c1densit;background:#0b1226;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .mbf{height:100%;border-radius:6px}
+  .mbv{width:34px;text-align:right;font-size:10.5px;color:var(--muted)}
+  .scard-foot{margin-top:11px;font-size:11px;color:var(--muted);border-top:1px solid var(--line);padding-top:9px}
+  .trendA{font-size:13px}
+  .empty{background:var(--panel);border:1px dashed var(--line);border-radius:14px;padding:34px;text-align:center;color:var(--muted)}
+  .empty h3{color:var(--text);margin:0 0 6px}
+  /* Student sheet */
+  .backbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .grid2{display:grid;grid-template-columns:1fr;gap:14px}
+  @media(min-width:900px){.grid2{grid-template-columns:1.05fr .95fr}}
+  .panel{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:16px;padding:16px}
+  .panel h3{margin:0 0 12px;font-size:14px;letter-spacing:.4px;text-transform:uppercase;color:#c4cef0}
+  /* hero */
+  .hero{position:relative;overflow:hidden;border-radius:16px;padding:16px;
+    background:linear-gradient(120deg,#241a4d 0%,#182246 45%,#10203f 100%);border:1px solid #3a3a86;box-shadow:0 0 0 1px #7c9cff22 inset}
+  .hero-top{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .hero .avatar{width:64px;height:64px;font-size:26px}
+  .hero-name{font-size:22px;font-weight:800}
+  .hero-meta{font-size:12px;color:#b9c4ea}
+  .levelbox{margin-left:auto;text-align:center;background:#0e1staff;background:rgba(9,13,30,.5);border:1px solid #3a4a7d;
+    border-radius:14px;padding:8px 14px;min-width:120px}
+  .levelbox .lv{font-size:11px;color:#b9c4ea;letter-spacing:1px}
+  .levelbox .rk{font-size:16px;font-weight:800}
+  .levelbox .av{font-size:26px;font-weight:800;line-height:1}
+  .xpwrap{margin-top:14px}
+  .xpbar{height:12px;background:rgba(9,13,30,.6);border:1px solid #3a4a7d;border-radius:999px;overflow:hidden}
+  .xpfill{height:100%;background:linear-gradient(90deg,#7c9cff,#a855f7);border-radius:999px}
+  .xplabel{display:flex;justify-content:space-between;font-size:11px;color:#c4cef0;margin-top:5px}
+  .badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .badge{background:rgba(9,13,30,.5);border:1px solid #3a4a7d;border-radius:999px;padding:5px 10px;font-size:11.5px;font-weight:700}
+  /* aspect cards */
+  .aspect{border:1px solid var(--line);border-radius:13px;padding:12px;margin-bottom:11px;background:#0e1730}
+  .aspect-head{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+  .aspect-ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:16px;flex:none}
+  .aspect-name{font-weight:800;font-size:14px}
+  .aspect-pct{margin-left:auto;font-size:20px;font-weight:800}
+  .bar{height:12px;background:#0b1226;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .barf{height:100%;border-radius:8px;transition:width .5s}
+  .aspect-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px;font-size:11.5px}
+  .delta{font-weight:800;font-size:11.5px;white-space:nowrap}
+  .delta.up{color:var(--up)}.delta.down{color:var(--down)}.delta.flat{color:var(--flat)}
+  .dlabel{color:var(--muted);font-size:11px}
+  .lvup{color:#ffe08a;font-weight:800;font-size:11px;background:#3a2f10;border:1px solid #6b551a;border-radius:6px;padding:2px 7px}
+  .lvdn{color:#ffb3b8;font-weight:700;font-size:11px;background:#3a1a20;border:1px solid #6b2730;border-radius:6px;padding:2px 7px}
+  .baseline{color:#c4cef0;font-size:10.5px;background:#22305a;border:1px solid #3a4a7d;border-radius:6px;padding:2px 7px;font-weight:700}
+  .rankbadge{font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:999px;color:#0b1020}
+  .classavg{color:var(--muted);font-size:11px}
+  /* radar */
+  .radar-wrap{display:flex;flex-direction:column;align-items:center}
+  .legend{display:flex;gap:16px;font-size:11.5px;color:var(--muted);margin-top:4px;flex-wrap:wrap;justify-content:center}
+  .legend .sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+  /* skill tree */
+  .skillgroup{margin-bottom:12px}
+  .skillgroup .gt{font-size:12px;font-weight:800;margin-bottom:7px;display:flex;align-items:center;gap:7px}
+  .skill{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px dashed var(--line)}
+  .skill:first-child{border-top:0}
+  .skill .code{width:38px;font-weight:800;font-size:12px;flex:none}
+  .skill .body{flex:1;min-width:0}
+  .skill .nm{font-size:12px;color:#d7def5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .skill .bar{height:8px;margin-top:4px}
+  .skill .rt{flex:none;text-align:right;min-width:96px}
+  .skill .rp{font-weight:800;font-size:13px}
+  .skdeltas{display:flex;gap:6px;justify-content:flex-end;margin-top:2px}
+  /* callouts */
+  .callout{display:flex;gap:11px;align-items:flex-start;border-radius:12px;padding:12px;margin-bottom:10px;border:1px solid}
+  .co-good{background:#0f2a1e;border-color:#1d5a3f}
+  .co-warn{background:#2c1720;border-color:#6b2730}
+  .callout .ic{font-size:22px}
+  .callout .tt{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:800}
+  .callout .mn{font-weight:800;font-size:14px;margin:2px 0}
+  /* remark */
+  .assess-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px dashed var(--line);font-size:13px}
+  .assess-row:first-child{border-top:0}
+  .assess-row .nm{flex:1;min-width:0}
+  .assess-row .tag{font-size:10.5px;color:var(--muted)}
+  .assess-row .sc{font-weight:800}
+  .assess-row .pc{width:74px;text-align:right}
+  .miniprog{height:6px;background:#0b1226;border:1px solid var(--line);border-radius:4px;overflow:hidden;margin-top:3px}
+  .remark-area{width:100%;background:#0b1226;border:1px solid var(--line);color:var(--text);border-radius:10px;
+    padding:11px;font-family:inherit;font-size:13px;line-height:1.5;min-height:120px;resize:vertical}
+  .row-between{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  /* modals */
+  .overlay{position:fixed;inset:0;background:rgba(4,7,18,.72);backdrop-filter:blur(3px);z-index:80;display:grid;place-items:center;padding:16px}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:16px;max-width:640px;width:100%;max-height:88vh;
+    overflow:auto;box-shadow:0 30px 70px #000a}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);
+    position:sticky;top:0;background:var(--panel)}
+  .modal-head h3{margin:0;font-size:16px}
+  .modal-body{padding:16px}
+  .modal-foot{padding:14px 16px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:var(--panel)}
+  .close-x{background:transparent;border:0;color:var(--muted);font-size:22px}
+  .dropzone{border:2px dashed #3a4a7d;border-radius:14px;padding:30px;text-align:center;color:var(--muted);background:#0e1730;cursor:pointer}
+  .dropzone.drag{border-color:var(--accent);background:#152246;color:var(--text)}
+  .summary-item{display:flex;gap:10px;align-items:center;padding:9px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:#0e1730}
+  .pill{font-size:10.5px;font-weight:800;padding:2px 9px;border-radius:999px}
+  .pill.new{background:#123a2a;color:#7ff0b5;border:1px solid #1d5a3f}
+  .pill.upd{background:#2a2350;color:#c3b6ff;border:1px solid #45379a}
+  .warn{background:#2c1720;border:1px solid #6b2730;color:#ffc4c9;border-radius:10px;padding:9px 11px;font-size:12.5px;margin-bottom:8px}
+  .manage-row{border:1px solid var(--line);border-radius:12px;padding:11px;margin-bottom:9px;background:#0e1730}
+  .manage-row .mn{font-weight:800;font-size:13px;margin-bottom:8px}
+  .mfields{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;align-items:end}
+  .mfields label{font-size:10.5px;color:var(--muted);display:block;margin-bottom:3px}
+  .mfields input,.mfields select{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:7px;font-size:12.5px;font-family:inherit}
+  .manage-foot{display:flex;justify-content:flex-end;margin-top:9px}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#182246;border:1px solid #3a4a7d;
+    color:#fff;padding:11px 18px;border-radius:10px;z-index:120;font-size:13px;box-shadow:0 12px 30px #0008;opacity:0;transition:opacity .25s,transform .25s}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">⚔️</span>
+    <div><div class="t1">SciQuest</div><div class="t2">Integrated Science · Skill Mastery Tracker</div></div>
+  </div>
+  <div class="actions">
+    <button class="btn" id="btnUpload">⬆️ Upload results</button>
+    <button class="btn ghost" id="btnManage">🗂️ Assessments</button>
+    <div class="menu">
+      <button class="btn ghost" id="btnMore">⋯</button>
+      <div class="menu-pop" id="morePop" hidden>
+        <button id="btnDemo">✨ Load sample data</button>
+        <button id="btnExport">💾 Backup (JSON)</button>
+        <button id="btnImport">📥 Restore (JSON)</button>
+        <button id="btnClear" class="danger">🗑️ Clear all data</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="hint" id="hint">
+  💾 Data is stored in your browser (localStorage). In restricted/sandboxed previews it may not persist between sessions — use “Backup” to keep a copy.
+  <button class="x" id="hintClose">×</button>
+</div>
+<div class="banner" id="demoBanner" hidden>✨ Showing sample data. Upload your own workbook, or clear all data to start fresh.</div>
+
+<main>
+  <section id="rosterView">
+    <div class="sectionhead">
+      <div class="h">🛡️ Class Overview</div>
+    </div>
+    <div class="statstrip" id="rosterStats"></div>
+    <div class="controls">
+      <input id="search" type="text" placeholder="🔍 Search name, class or SID…">
+      <select id="sortby">
+        <option value="name">Sort: Name (A→Z)</option>
+        <option value="class">Sort: Class &amp; No.</option>
+        <option value="avg">Sort: Overall (high→low)</option>
+        <option value="trend">Sort: Improving first</option>
+        <option value="count">Sort: Most assessments</option>
+      </select>
+    </div>
+    <div id="rosterList"></div>
+  </section>
+
+  <section id="studentView" hidden></section>
+</main>
+
+<!-- Upload modal -->
+<div class="overlay" id="uploadModal" hidden>
+  <div class="modal">
+    <div class="modal-head"><h3>⬆️ Upload assessment workbook</h3><button class="close-x" data-close>×</button></div>
+    <div class="modal-body" id="uploadBody"></div>
+    <div class="modal-foot">
+      <button class="btn ghost" data-close>Cancel</button>
+      <button class="btn" id="confirmImport" disabled>Confirm import</button>
+    </div>
+  </div>
+</div>
+
+<!-- Manage modal -->
+<div class="overlay" id="manageModal" hidden>
+  <div class="modal">
+    <div class="modal-head"><h3>🗂️ Assessments &amp; timeline</h3><button class="close-x" data-close>×</button></div>
+    <div class="modal-body" id="manageBody"></div>
+    <div class="modal-foot"><button class="btn" data-close>Done</button></div>
+  </div>
+</div>
+
+<!-- Confirm modal -->
+<div class="overlay" id="confirmModal" hidden>
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head"><h3>Please confirm</h3></div>
+    <div class="modal-body"><p id="confirmMsg" style="margin:0"></p></div>
+    <div class="modal-foot"><button class="btn ghost" id="confirmNo">Cancel</button><button class="btn danger" id="confirmYes">Confirm</button></div>
+  </div>
+</div>
+
+<input type="file" id="uploadFile" accept=".xlsx,.xls" hidden>
+<input type="file" id="importFile" accept=".json,application/json" hidden>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   TAXONOMY / CONSTANTS
+============================================================ */
+const ASPECTS=[
+  {key:'R',  name:'Reasoning',       full:'Scientific Reasoning', color:'var(--R)',   raw:'#8b5cf6', icon:'🧠'},
+  {key:'E',  name:'Experimenting',   full:'Experimenting',        color:'var(--E)',   raw:'#10b981', icon:'⚗️'},
+  {key:'D',  name:'Data Processing', full:'Data Processing',      color:'var(--D)',   raw:'#f59e0b', icon:'📊'},
+  {key:'ENG',name:'English',         full:'Scientific English',   color:'var(--ENG)', raw:'#fb7185', icon:'📖'},
+];
+const ASPECT_RAW={R:'#8b5cf6',E:'#10b981',D:'#f59e0b',ENG:'#fb7185'};
+const SUBSKILLS={R:['R1','R2','R3','R4'],E:['E1','E2','E3','E4','E5','E6','E7'],D:['D1','D2','D3','D4'],ENG:['ENG']};
+const SKILL_NAMES={
+  R1:'Inducing a trend/model from data',R2:'Deducing a result from a model',R3:'Inferring the best explanation',R4:'Deciding based on probability',
+  E1:'Formulating a hypothesis',E2:'Identifying variables',E3:'Qualitative & quantitative observation',E4:'Accuracy & precision',
+  E5:'Designing a controlled experiment',E6:'Choosing/improving a method',E7:'Commenting on reliability',
+  D1:'Notation, sig. figs & ratio',D2:'Using tables & graphs',D3:'Scientific formulae',D4:'Outliers & uncertainty',
+  ENG:'Scientific English'
+};
+const RANKS=[
+  {min:90,name:'Master',lv:5,raw:'#a855f7'},
+  {min:75,name:'Expert',lv:4,raw:'#22c55e'},
+  {min:60,name:'Adept',lv:3,raw:'#3b82f6'},
+  {min:40,name:'Apprentice',lv:2,raw:'#f59e0b'},
+  {min:0, name:'Novice',lv:1,raw:'#94a3b8'},
+];
+function rankFor(pct){ if(pct==null||isNaN(pct)) return {name:'—',lv:0,raw:'#64748b',min:0}; for(const r of RANKS){ if(pct>=r.min) return r; } return RANKS[RANKS.length-1]; }
+function xpInfo(pct){
+  const r=rankFor(pct); if(r.lv===0) return {p:0,next:null};
+  const idx=RANKS.findIndex(x=>x.name===r.name);
+  if(r.lv===5) return {p:100,next:null,lower:90,upper:100};
+  const lower=r.min, upper=RANKS[idx-1].min, span=upper-lower;
+  return {p:Math.max(0,Math.min(100,span>0?(pct-lower)/span*100:100)),next:RANKS[idx-1].name,lower,upper};
+}
+
+/* ============================================================
+   STATE / STORAGE
+============================================================ */
+let DB=emptyDB(), pending=null, currentSid=null, currentView='roster';
+function emptyDB(){ return {students:{},assessments:[],remarks:{}}; }
+function loadDB(){ try{ const s=localStorage.getItem('sq_db'); if(!s) return null; const d=JSON.parse(s); if(d&&d.assessments) return d; }catch(e){} return null; }
+function saveDB(){ try{ localStorage.setItem('sq_db',JSON.stringify(DB)); }catch(e){} }
+
+/* ============================================================
+   HELPERS
+============================================================ */
+function esc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function num(v){ if(v==null||v==='') return NaN; if(typeof v==='number') return v; const n=parseFloat(String(v).replace(/[^0-9.\-]/g,'')); return isNaN(n)?NaN:n; }
+function mean(a){ return a.length? a.reduce((s,v)=>s+v,0)/a.length : null; }
+function fmt(p){ return (p==null||isNaN(p))?'—':Math.round(p)+'%'; }
+function aspectOf(code){ if(!code) return null; const s=code.toUpperCase(); if(s.startsWith('ENG')) return 'ENG'; const c=s[0]; return (c==='R'||c==='E'||c==='D')?c:'ENG'; }
+function normCode(v){ if(v==null) return null; let s=String(v).trim().toUpperCase().replace(/\s+/g,''); if(!s) return null;
+  if(s.startsWith('ENG')||s.startsWith('ENGLISH')) return 'ENG';
+  if(/^R\d+$/.test(s)||/^E\d+$/.test(s)||/^D\d+$/.test(s)) return s; return null; }
+function cohortOf(sid){ const m=String(sid).match(/(\d{4})/); return m?m[1]:null; }
+function cohortLabel(sid){ const y=cohortOf(sid); if(!y) return ''; const yy=(+y%100); const nx=String((yy+1)%100).padStart(2,'0'); return `'${String(yy).padStart(2,'0')}/${nx} intake`; }
+function deltaHTML(d){ if(d==null) return '<span class="delta flat">—</span>'; const r=Math.round(d);
+  if(r>0) return `<span class="delta up">▲ +${r}%</span>`; if(r<0) return `<span class="delta down">▼ ${r}%</span>`; return '<span class="delta flat">► 0%</span>'; }
+function rankBadge(pct){ const r=rankFor(pct); return `<span class="rankbadge" style="background:${r.raw}">Lv.${r.lv} ${r.name}</span>`; }
+
+/* Ordering */
+function formRank(f){ const m={S1:1,S2:2,S3:3,F1:1,F2:2,F3:3}; return m[String(f||'').toUpperCase()]||9; }
+function termRank(t){ const m=String(t||'').match(/\d+/); return m?parseInt(m[0]):0; }
+function sortKey(a){ return formRank(a.form)*1e6 + termRank(a.term)*1e3 + (a.seq||0); }
+function sortedAssessments(){ return DB.assessments.slice().sort((x,y)=>sortKey(x)-sortKey(y)); }
+function studentAssessments(sid){ return sortedAssessments().filter(a=>a.results[sid]); }
+
+/* Mastery computations */
+function cumulative(sid,key,level){ let e=0,p=0; studentAssessments(sid).forEach(a=>{
+  const max=level==='aspect'?a.aspectMax[key]:a.skillMax[key];
+  const earned=level==='aspect'?a.results[sid].aspectEarned[key]:a.results[sid].skillEarned[key];
+  if(max>0 && earned!=null){ e+=earned; p+=max; } }); return p>0? e/p*100 : null; }
+function seriesForKey(sid,key,level){ return studentAssessments(sid).map(a=>{
+  const max=level==='aspect'?a.aspectMax[key]:a.skillMax[key];
+  const earned=level==='aspect'?a.results[sid].aspectEarned[key]:a.results[sid].skillEarned[key];
+  const pct=(max>0&&earned!=null)?earned/max*100:null; return {a,pct}; }); }
+function deltas(series){ const v=series.filter(s=>s.pct!=null); if(!v.length) return {current:null,vsPrev:null,vsFirst:null,n:0};
+  const cur=v[v.length-1].pct, first=v[0].pct, prev=v.length>=2?v[v.length-2].pct:null;
+  return {current:cur,vsPrev:prev==null?null:cur-prev,vsFirst:v.length>=2?cur-first:null,n:v.length}; }
+function levelChange(series){ const v=series.filter(s=>s.pct!=null); if(v.length<2) return null;
+  const a=rankFor(v[v.length-2].pct), b=rankFor(v[v.length-1].pct);
+  if(b.lv>a.lv) return {dir:'up',from:a,to:b}; if(b.lv<a.lv) return {dir:'down',from:a,to:b}; return null; }
+function overallSeries(sid){ return studentAssessments(sid).map(a=>({a,pct:a.fullTotal>0?a.results[sid].total/a.fullTotal*100:null})); }
+function overallAvg(sid){ return mean(overallSeries(sid).map(s=>s.pct).filter(p=>p!=null)); }
+function overallTrend(sid){ const s=overallSeries(sid).filter(x=>x.pct!=null); if(s.length<2) return {label:'baseline',delta:null};
+  const d=s[s.length-1].pct-s[0].pct; return {label:d>3?'improving':d<-3?'declining':'steady',delta:d}; }
+function presentSkillCodes(sid){ const set=new Set(); studentAssessments(sid).forEach(a=>Object.keys(a.skillMax).forEach(c=>{ if(a.skillMax[c]>0) set.add(c); })); return set; }
+function skillStats(sid,code){ const series=seriesForKey(sid,code,'skill'); return {code,series,...deltas(series),cum:cumulative(sid,code,'skill')}; }
+function mostImproved(sid){ let best=null; presentSkillCodes(sid).forEach(c=>{ const s=skillStats(sid,c); if(s.vsFirst!=null&&s.vsFirst>0){ if(!best||s.vsFirst>best.vsFirst) best=s; } }); return best; }
+function needsAttention(sid){ let decl=null,low=null; presentSkillCodes(sid).forEach(c=>{ const s=skillStats(sid,c);
+  if(s.vsPrev!=null&&s.vsPrev<0){ if(!decl||s.vsPrev<decl.vsPrev) decl=s; }
+  if(s.cum!=null){ if(!low||s.cum<low.cum) low=s; } });
+  return decl?{...decl,reason:'decline'}:(low?{...low,reason:'low'}:null); }
+function biggestDecline(sid){ let w=null; presentSkillCodes(sid).forEach(c=>{ const s=skillStats(sid,c); if(s.vsPrev!=null&&s.vsPrev<0){ if(!w||s.vsPrev<w.vsPrev) w=s; } }); return w; }
+function classAspectAverages(){ const r={}; ASPECTS.forEach(a=>{ const v=Object.keys(DB.students).map(sid=>cumulative(sid,a.key,'aspect')).filter(x=>x!=null); r[a.key]=v.length?mean(v):null; }); return r; }
+function achievements(sid){ const out=[]; const av=ASPECTS.map(a=>cumulative(sid,a.key,'aspect'));
+  if(av.some(p=>p!=null&&p>=90)) out.push({ic:'👑',l:'Master Rank reached'});
+  if(av.every(p=>p!=null&&p>=60)) out.push({ic:'🌟',l:'All-Rounder (all ≥ Adept)'});
+  const mi=mostImproved(sid); if(mi&&mi.vsFirst>=15) out.push({ic:'🚀',l:`Rising Star (+${Math.round(mi.vsFirst)}%)`});
+  const n=studentAssessments(sid).length; if(n>=3) out.push({ic:'🎖️',l:`${n} quests cleared`});
+  return out; }
+function avatarColor(name){ const cols=['#7c9cff','#10b981','#f59e0b','#fb7185','#a855f7','#38bdf8','#f472b6','#34d399']; let h=0; for(const c of String(name||'?')) h=(h*31+c.charCodeAt(0))%cols.length; return cols[h]; }
+
+/* ============================================================
+   PARSING
+============================================================ */
+function findRow(rows,test){ for(let i=0;i<rows.length;i++){ const r=rows[i]||[]; for(let j=0;j<Math.min(r.length,6);j++){ const c=r[j];
+  if(c!=null){ const s=String(c).trim().toLowerCase().replace(/[:：]$/,''); if(s&&test(s)) return i; } } } return -1; }
+function findCol(header,test){ for(let j=0;j<header.length;j++){ const c=header[j]; if(c!=null){ const s=String(c).trim().toLowerCase(); if(test(s)) return j; } } return -1; }
+
+function parseSheet(name,rows,warnings){
+  const headerRow=findRow(rows,s=>s==='sid'||s==='s.i.d'||s==='student id'||s.startsWith('sid'));
+  const typeRow=findRow(rows,s=>s==='type'||s==='skill'||s==='skill type'||s.startsWith('type'));
+  const fullRow=findRow(rows,s=>s.startsWith('full'));
+  const avgRow=findRow(rows,s=>s.startsWith('average')||s.startsWith('avg')||s.startsWith('mean'));
+  if(headerRow<0){ warnings.push(`“${name}”: no header row containing “SID” — sheet skipped.`); return null; }
+  if(typeRow<0){ warnings.push(`“${name}”: missing a “type” (skill mapping) row — sheet skipped.`); return null; }
+  if(fullRow<0){ warnings.push(`“${name}”: missing a “Full” (max marks) row — sheet skipped.`); return null; }
+
+  const header=rows[headerRow]||[], tRow=rows[typeRow]||[], fRow=rows[fullRow]||[];
+  const idxSID=findCol(header,s=>s==='sid'||s.startsWith('sid')||s==='student id');
+  const idxName=findCol(header,s=>s==='name');
+  const idxClass=findCol(header,s=>s.includes('class'));
+  const idxTotal=findCol(header,s=>s==='total'||s.startsWith('total'));
+  if(idxSID<0){ warnings.push(`“${name}”: could not locate the SID column — sheet skipped.`); return null; }
+
+  const skip=new Set([idxSID,idxName,idxClass,idxTotal].filter(x=>x>=0));
+  const maxLen=Math.max(header.length,tRow.length,fRow.length);
+  const qcols=[];
+  for(let j=0;j<maxLen;j++){ if(skip.has(j)) continue; const code=normCode(tRow[j]); const full=num(fRow[j]);
+    if(code && full>0) qcols.push({j,code,aspect:aspectOf(code),full}); }
+  if(!qcols.length){ warnings.push(`“${name}”: no valid skill-tagged question columns found — sheet skipped.`); return null; }
+
+  const skillMax={},aspectMax={}; qcols.forEach(q=>{ skillMax[q.code]=(skillMax[q.code]||0)+q.full; aspectMax[q.aspect]=(aspectMax[q.aspect]||0)+q.full; });
+  const fullTotal=qcols.reduce((s,q)=>s+q.full,0);
+
+  const labelRows=new Set([headerRow,typeRow,fullRow,avgRow].filter(x=>x>=0));
+  const results={},roster=[];
+  for(let i=headerRow+1;i<rows.length;i++){ if(labelRows.has(i)) continue; const row=rows[i]||[];
+    const sid=String(row[idxSID]??'').trim();
+    if(!sid||!/\d/.test(sid)||/^(full|type|average|avg|mean)$/i.test(sid)) continue;
+    const sName=idxName>=0?String(row[idxName]??'').trim():'';
+    const classNo=idxClass>=0?String(row[idxClass]??'').trim():'';
+    const skillEarned={},aspectEarned={}; let total=0;
+    qcols.forEach(q=>{ let m=num(row[q.j]); if(isNaN(m)) m=0; skillEarned[q.code]=(skillEarned[q.code]||0)+m; aspectEarned[q.aspect]=(aspectEarned[q.aspect]||0)+m; total+=m; });
+    results[sid]={sid,name:sName,classNo,skillEarned,aspectEarned,total};
+    roster.push({sid,name:sName,classNo});
+  }
+  if(!roster.length){ warnings.push(`“${name}”: header found but no student rows detected — sheet skipped.`); return null; }
+  return {name:name.trim(),skillMax,aspectMax,fullTotal,results,roster,skillCodes:Object.keys(skillMax)};
+}
+
+function parseWorkbook(buf){
+  const wb=XLSX.read(new Uint8Array(buf),{type:'array'});
+  const assessments=[],warnings=[];
+  wb.SheetNames.forEach(nm=>{ const rows=XLSX.utils.sheet_to_json(wb.Sheets[nm],{header:1,raw:true,defval:null});
+    const p=parseSheet(nm,rows,warnings); if(p) assessments.push(p); });
+  return {assessments,warnings};
+}
+
+/* ============================================================
+   MERGE
+============================================================ */
+function purgeDemo(){ if(!DB.assessments.some(a=>a.demo)) return; DB.assessments=DB.assessments.filter(a=>!a.demo);
+  const used=new Set(); DB.assessments.forEach(a=>Object.keys(a.results).forEach(s=>used.add(s)));
+  Object.keys(DB.students).forEach(s=>{ if(!used.has(s)) delete DB.students[s]; }); }
+function mergeAssessment(p){
+  p.roster.forEach(s=>{ const ex=DB.students[s.sid]||{}; DB.students[s.sid]={sid:s.sid,name:s.name||ex.name||'',classNo:s.classNo||ex.classNo||''}; });
+  const i=DB.assessments.findIndex(a=>a.name.toLowerCase()===p.name.toLowerCase());
+  if(i>=0){ const ex=DB.assessments[i]; DB.assessments[i]={...ex,skillMax:p.skillMax,aspectMax:p.aspectMax,fullTotal:p.fullTotal,results:p.results,skillCodes:p.skillCodes,demo:false};
+    return {status:'updated',name:p.name,students:p.roster.length}; }
+  const seq=DB.assessments.length?Math.max(...DB.assessments.map(a=>a.seq||0))+1:1;
+  DB.assessments.push({id:'a'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:p.name,
+    year:'2026/27',form:'S1',term:'Term 1',seq,createdAt:Date.now(),
+    skillMax:p.skillMax,aspectMax:p.aspectMax,fullTotal:p.fullTotal,results:p.results,skillCodes:p.skillCodes,demo:false});
+  return {status:'new',name:p.name,students:p.roster.length};
+}
+
+/* ============================================================
+   CHARTS (SVG)
+============================================================ */
+function radarSVG(sVals,cVals){
+  const size=280,c=size/2,R=92,n=ASPECTS.length;
+  const ang=i=>-Math.PI/2+i*2*Math.PI/n;
+  const P=(i,r)=>[(c+Math.cos(ang(i))*r).toFixed(1),(c+Math.sin(ang(i))*r).toFixed(1)];
+  let g='';
+  [0.25,0.5,0.75,1].forEach(f=>{ let pts=[]; for(let i=0;i<n;i++){ const[x,y]=P(i,R*f); pts.push(x+','+y);} g+=`<polygon points="${pts.join(' ')}" fill="none" stroke="#26304d" stroke-width="1"/>`; });
+  for(let i=0;i<n;i++){ const[x,y]=P(i,R); g+=`<line x1="${c}" y1="${c}" x2="${x}" y2="${y}" stroke="#26304d" stroke-width="1"/>`;
+    const[lx,ly]=P(i,R+16); let anch='middle'; const ax=parseFloat(lx); if(ax>c+6)anch='start'; else if(ax<c-6)anch='end';
+    g+=`<text x="${lx}" y="${ly}" fill="#93a0bd" font-size="10" text-anchor="${anch}" dominant-baseline="middle">${ASPECTS[i].icon} ${ASPECTS[i].name}</text>`; }
+  const poly=(vals,stroke,fill,dash)=>{ let pts=[]; for(let i=0;i<n;i++){ let v=vals[ASPECTS[i].key]; if(v==null)v=0; const r=R*Math.max(0,Math.min(100,v))/100; const[x,y]=P(i,r); pts.push(x+','+y);} return `<polygon points="${pts.join(' ')}" fill="${fill}" stroke="${stroke}" stroke-width="2" ${dash?'stroke-dasharray="4 3"':''}/>`; };
+  let cl=cVals?poly(cVals,'#93a0bd','rgba(147,160,189,0.10)',true):'';
+  let sd=poly(sVals,'#7c9cff','rgba(124,156,255,0.28)',false);
+  let dots=''; for(let i=0;i<n;i++){ let v=sVals[ASPECTS[i].key]; if(v==null)continue; const r=R*Math.max(0,Math.min(100,v))/100; const[x,y]=P(i,r); dots+=`<circle cx="${x}" cy="${y}" r="3.2" fill="#7c9cff"/>`; }
+  return `<svg viewBox="0 0 ${size} ${size}" width="100%" style="max-width:300px" role="img" aria-label="Aspect radar chart">${g}${cl}${sd}${dots}</svg>`;
+}
+function lineChartSVG(sid){
+  const arr=studentAssessments(sid); if(!arr.length) return '<div class="muted small">No data.</div>';
+  const W=680,H=300,padL=32,padR=14,padT=14,padB=76,plotW=W-padL-padR,plotH=H-padT-padB,n=arr.length;
+  const xAt=i=>n===1?padL+plotW/2:padL+plotW*i/(n-1), yAt=v=>padT+plotH*(1-v/100);
+  let g='';
+  [0,25,50,75,100].forEach(v=>{ const y=yAt(v); g+=`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="#26304d" stroke-width="1"/><text x="${padL-6}" y="${y+3}" fill="#93a0bd" font-size="9" text-anchor="end">${v}</text>`; });
+  arr.forEach((a,i)=>{ const x=xAt(i); const sh=a.name.length>16?a.name.slice(0,15)+'…':a.name; g+=`<text x="${x}" y="${H-padB+15}" fill="#93a0bd" font-size="9" text-anchor="end" transform="rotate(-32 ${x} ${H-padB+15})">${esc(sh)}</text>`; });
+  ASPECTS.forEach(a=>{ const pts=[]; arr.forEach((as,i)=>{ const max=as.aspectMax[a.key], earned=as.results[sid].aspectEarned[a.key];
+    const pct=(max>0&&earned!=null)?earned/max*100:null; if(pct!=null) pts.push([xAt(i),yAt(pct)]); });
+    if(pts.length){ const d=pts.map((p,k)=>(k?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+      g+=`<path d="${d}" fill="none" stroke="${a.raw}" stroke-width="2.5"/>`; pts.forEach(p=>g+=`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="${a.raw}"/>`); } });
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Aspect trend line chart">${g}</svg>`;
+}
+
+/* ============================================================
+   RENDER — ROSTER
+============================================================ */
+function renderStats(){
+  const nS=Object.keys(DB.students).length, nA=DB.assessments.length;
+  const ca=classAspectAverages(); const avg=mean(ASPECTS.map(a=>ca[a.key]).filter(x=>x!=null));
+  const el=document.getElementById('rosterStats');
+  el.innerHTML=`
+    <div class="kpi"><div class="n">${nS}</div><div class="l">Students</div></div>
+    <div class="kpi"><div class="n">${nA}</div><div class="l">Assessments</div></div>
+    <div class="kpi"><div class="n">${fmt(avg)}</div><div class="l">Class mastery</div></div>
+    <div class="kpi"><div class="n">${rankFor(avg).lv?('Lv.'+rankFor(avg).lv):'—'}</div><div class="l">${rankFor(avg).name}</div></div>`;
+}
+function trendArrow(sid){ const t=overallTrend(sid);
+  if(t.label==='improving') return '<span class="trendA" style="color:var(--up)" title="Improving">▲</span>';
+  if(t.label==='declining') return '<span class="trendA" style="color:var(--down)" title="Declining">▼</span>';
+  if(t.label==='steady') return '<span class="trendA" style="color:var(--flat)" title="Steady">►</span>';
+  return '<span class="trendA muted" title="Baseline">•</span>'; }
+function renderRosterList(){
+  const q=(document.getElementById('search').value||'').toLowerCase().trim();
+  const sort=document.getElementById('sortby').value;
+  let list=Object.values(DB.students);
+  if(q) list=list.filter(s=>(s.name||'').toLowerCase().includes(q)||(s.sid||'').toLowerCase().includes(q)||(s.classNo||'').toLowerCase().includes(q));
+  list.forEach(s=>{ s._avg=overallAvg(s.sid); s._n=studentAssessments(s.sid).length; s._t=overallTrend(s.sid).delta??-999; });
+  const byName=(a,b)=>(a.name||'').localeCompare(b.name||'');
+  list.sort((a,b)=>{ if(sort==='name') return byName(a,b);
+    if(sort==='class') return (a.classNo||'').localeCompare(b.classNo||'',undefined,{numeric:true});
+    if(sort==='avg') return (b._avg??-1)-(a._avg??-1);
+    if(sort==='trend') return (b._t)-(a._t)||byName(a,b);
+    if(sort==='count') return b._n-a._n||byName(a,b); return 0; });
+  const wrap=document.getElementById('rosterList');
+  if(!list.length){ wrap.innerHTML=`<div class="empty"><h3>${q?'No matching students':'No data yet'}</h3>
+    <p>${q?'Try a different search.':'Upload a workbook to get started, or load the sample data.'}</p>
+    ${q?'':'<button class="btn" onclick="loadDemo();render();showToast(\'Sample data loaded\')">✨ Load sample data</button>'}</div>`; return; }
+  wrap.innerHTML=`<div class="roster-grid">`+list.map(s=>{
+    const ini=(s.name||'?').trim().charAt(0).toUpperCase()||'?'; const col=avatarColor(s.name);
+    const r=rankFor(s._avg);
+    const bars=ASPECTS.map(a=>{ const p=cumulative(s.sid,a.key,'aspect'); const w=p==null?0:Math.max(2,p);
+      return `<div class="mb"><span class="mbl" style="color:${a.raw}">${a.key}</span><div class="mbt"><div class="mbf" style="width:${w}%;background:${a.raw}"></div></div><span class="mbv">${fmt(p)}</span></div>`; }).join('');
+    return `<div class="scard" data-sid="${esc(s.sid)}">
+      <div class="scard-top">
+        <div class="avatar" style="background:${col}">${esc(ini)}</div>
+        <div class="sinfo"><div class="sname">${esc(s.name||'(no name)')} ${trendArrow(s.sid)}</div>
+          <div class="smeta">${esc(s.classNo||'—')} · ${esc(s.sid)}</div></div>
+        <div class="savg"><div class="big">${fmt(s._avg)}</div><span class="rankpill" style="background:${r.raw}">${r.name}</span></div>
+      </div>
+      <div class="minibars">${bars}</div>
+      <div class="scard-foot">${s._n} assessment${s._n===1?'':'s'} · ${cohortLabel(s.sid)}</div>
+    </div>`; }).join('')+`</div>`;
+}
+function renderRoster(){ renderStats(); renderRosterList(); }
+
+/* ============================================================
+   RENDER — STUDENT STAT SHEET
+============================================================ */
+function renderStudent(sid){
+  const st=DB.students[sid]; const arr=studentAssessments(sid); const oAvg=overallAvg(sid);
+  const oRank=rankFor(oAvg); const xp=xpInfo(oAvg); const ini=(st.name||'?').trim().charAt(0).toUpperCase()||'?';
+  const col=avatarColor(st.name); const ca=classAspectAverages();
+  const sVals={}; ASPECTS.forEach(a=>sVals[a.key]=cumulative(sid,a.key,'aspect'));
+  const ot=overallTrend(sid); const achv=achievements(sid); const mi=mostImproved(sid); const na=needsAttention(sid);
+
+  /* aspect cards */
+  const aspectCards=ASPECTS.map(a=>{
+    const cum=cumulative(sid,a.key,'aspect'); const series=seriesForKey(sid,a.key,'aspect'); const d=deltas(series); const lc=levelChange(series);
+    const w=cum==null?0:Math.max(2,cum);
+    let flag=''; if(d.n<=1) flag='<span class="baseline">Baseline</span>';
+    else if(lc&&lc.dir==='up') flag=`<span class="lvup">⬆ Levelled up! ${lc.from.name}→${lc.to.name}</span>`;
+    else if(lc&&lc.dir==='down') flag=`<span class="lvdn">▼ rank down</span>`;
+    return `<div class="aspect">
+      <div class="aspect-head">
+        <div class="aspect-ic" style="background:${a.raw}22;border:1px solid ${a.raw}66">${a.icon}</div>
+        <div><div class="aspect-name" style="color:${a.raw}">${a.name}</div><div class="small muted">${a.full}</div></div>
+        <div class="aspect-pct">${fmt(cum)}</div>
+      </div>
+      <div class="bar"><div class="barf" style="width:${w}%;background:${a.raw}"></div></div>
+      <div class="aspect-foot">
+        ${rankBadge(cum)}
+        <span class="dlabel">vs last</span>${deltaHTML(d.vsPrev)}
+        <span class="dlabel">vs first</span>${deltaHTML(d.vsFirst)}
+        ${flag}
+        <span class="classavg" style="margin-left:auto">Class ${fmt(ca[a.key])}</span>
+      </div>
+    </div>`; }).join('');
+
+  /* skill tree */
+  const present=presentSkillCodes(sid);
+  const skillTree=ASPECTS.map(a=>{
+    const codes=SUBSKILLS[a.key].filter(c=>present.has(c));
+    if(!codes.length) return '';
+    const rows=codes.map(c=>{ const s=skillStats(sid,c); const w=s.cum==null?0:Math.max(2,s.cum);
+      return `<div class="skill">
+        <div class="code" style="color:${a.raw}">${c}</div>
+        <div class="body"><div class="nm">${esc(SKILL_NAMES[c]||c)}</div>
+          <div class="bar"><div class="barf" style="width:${w}%;background:${a.raw}"></div></div></div>
+        <div class="rt"><div class="rp">${fmt(s.cum)}</div>
+          <div class="skdeltas">${deltaHTML(s.vsPrev)}${deltaHTML(s.vsFirst)}</div>
+          <div style="margin-top:2px">${rankBadge(s.cum)}</div></div>
+      </div>`; }).join('');
+    return `<div class="skillgroup"><div class="gt" style="color:${a.raw}">${a.icon} ${a.name}</div>${rows}</div>`;
+  }).join('');
+
+  /* callouts */
+  let miHTML=`<div class="callout co-good"><div class="ic">🚀</div><div><div class="tt">Most improved</div>
+    <div class="mn">${mi?esc(SKILL_NAMES[mi.code]||mi.code):'—'}</div>
+    <div class="small">${mi?`Grown ${deltaHTML(mi.vsFirst)} since the first assessment — now ${fmt(mi.cum)} (${rankFor(mi.cum).name}).`:'Needs at least two assessments to measure growth.'}</div></div></div>`;
+  let naHTML='';
+  if(na){ const isDecl=na.reason==='decline';
+    naHTML=`<div class="callout co-warn"><div class="ic">${isDecl?'⚠️':'🎯'}</div><div><div class="tt">Needs attention</div>
+      <div class="mn">${esc(SKILL_NAMES[na.code]||na.code)}</div>
+      <div class="small">${isDecl?`Dropped ${deltaHTML(na.vsPrev)} vs the previous test (now ${fmt(na.cum)}).`:`Lowest current mastery at ${fmt(na.cum)} (${rankFor(na.cum).name}) — a priority for support.`}</div></div></div>`; }
+
+  /* remark: assessment list */
+  const assessList=arr.map(a=>{ const tot=a.results[sid].total, pc=a.fullTotal>0?tot/a.fullTotal*100:0; const r=rankFor(pc);
+    return `<div class="assess-row"><div class="nm"><div>${esc(a.name)}</div>
+        <div class="tag">${esc(a.form||'')} · ${esc(a.term||'')} · ${esc(a.year||'')}</div>
+        <div class="miniprog"><div style="height:100%;width:${Math.max(2,pc)}%;background:${r.raw}"></div></div></div>
+      <div class="sc">${Math.round(tot*10)/10}/${a.fullTotal}</div>
+      <div class="pc" style="color:${r.raw};font-weight:800">${fmt(pc)}</div></div>`; }).join('');
+  const remarkText=DB.remarks[sid]!=null?DB.remarks[sid]:autoComment(sid);
+
+  /* radar legend */
+  const legend=`<div class="legend"><span><span class="sw" style="background:#7c9cff"></span>${esc(st.name||'Student')}</span>
+    <span><span class="sw" style="background:#93a0bd"></span>Class average</span></div>`;
+
+  const badgeHTML=achv.length?`<div class="badges">${achv.map(b=>`<span class="badge">${b.ic} ${esc(b.l)}</span>`).join('')}</div>`:'';
+
+  document.getElementById('studentView').innerHTML=`
+    <div class="backbar"><button class="btn ghost" id="btnBack">← Back to class</button>
+      <span class="muted small">Character Stat Sheet</span></div>
+
+    <div class="hero" style="margin-bottom:14px">
+      <div class="hero-top">
+        <div class="avatar" style="background:${col}">${esc(ini)}</div>
+        <div><div class="hero-name">${esc(st.name||'(no name)')}</div>
+          <div class="hero-meta">${esc(st.classNo||'—')} · ${esc(st.sid)} · ${cohortLabel(st.sid)}</div></div>
+        <div class="levelbox"><div class="lv">RANK</div><div class="rk" style="color:${oRank.raw}">${oRank.name}</div>
+          <div class="av">${fmt(oAvg)}</div><div class="small" style="color:#b9c4ea">Lv.${oRank.lv} · overall avg</div></div>
+      </div>
+      <div class="xpwrap"><div class="xpbar"><div class="xpfill" style="width:${xp.p}%"></div></div>
+        <div class="xplabel"><span>XP to next rank</span><span>${xp.next?('→ '+xp.next+' at '+xp.upper+'%'):'Max rank reached 👑'}</span></div></div>
+      ${badgeHTML}
+    </div>
+
+    <div class="grid2">
+      <div>
+        <div class="panel" style="margin-bottom:14px"><h3>Core Stats</h3>${aspectCards}</div>
+        <div class="panel"><h3>Skill Radar</h3><div class="radar-wrap">${radarSVG(sVals,ca)}${legend}</div></div>
+      </div>
+      <div>
+        <div class="panel" style="margin-bottom:14px">${miHTML}${naHTML}</div>
+        <div class="panel" style="margin-bottom:14px"><h3>Skill Tree (sub-skills)</h3>${skillTree||'<div class="muted small">No sub-skill data.</div>'}</div>
+        <div class="panel" style="margin-bottom:14px"><h3>Remark Panel</h3>
+          <div class="small muted" style="margin-bottom:6px">Assessments sat (chronological)</div>
+          ${assessList||'<div class="muted small">No assessments.</div>'}
+          <div class="row-between" style="margin:12px 0 6px"><b>Overall average</b><span style="font-weight:800;color:${oRank.raw}">${fmt(oAvg)} · Lv.${oRank.lv} ${oRank.name}</span></div>
+          <div class="row-between" style="margin-bottom:10px"><span class="small muted">Auto comment (editable — saved automatically)</span>
+            <button class="btn ghost small" id="btnRegen">↻ Regenerate</button></div>
+          <textarea class="remark-area" id="remarkBox">${esc(remarkText)}</textarea>
+        </div>
+        <div class="panel"><h3>Aspect Trend Over Time</h3>${lineChartSVG(sid)}
+          <div class="legend">${ASPECTS.map(a=>`<span><span class="sw" style="background:${a.raw}"></span>${a.name}</span>`).join('')}</div></div>
+      </div>
+    </div>`;
+
+  document.getElementById('btnBack').onclick=()=>{ currentView='roster'; showView(); renderRoster(); };
+  const rb=document.getElementById('remarkBox');
+  rb.addEventListener('input',()=>{ DB.remarks[sid]=rb.value; saveDB(); });
+  document.getElementById('btnRegen').onclick=()=>{ const t=autoComment(sid); DB.remarks[sid]=t; rb.value=t; saveDB(); showToast('Comment regenerated'); };
+}
+
+function autoComment(sid){
+  const st=DB.students[sid]; const arr=studentAssessments(sid); if(!arr.length) return 'No assessment data recorded yet.';
+  const who=st.name||'This student';
+  const asp=ASPECTS.map(a=>({a,pct:cumulative(sid,a.key,'aspect')})).filter(x=>x.pct!=null).sort((x,y)=>y.pct-x.pct);
+  const parts=[];
+  if(asp.length){ const s=asp[0], w=asp[asp.length-1];
+    parts.push(asp.length>1?`${who} is strongest in ${s.a.name} (${Math.round(s.pct)}%) and finds ${w.a.name} (${Math.round(w.pct)}%) most challenging.`
+      :`${who} currently sits at ${Math.round(s.pct)}% in ${s.a.name}.`); }
+  const os=overallSeries(sid).filter(x=>x.pct!=null); const ot=overallTrend(sid);
+  if(os.length>=2) parts.push(`Overall performance has been ${ot.label} since the first assessment (${Math.round(os[0].pct)}% → ${Math.round(os[os.length-1].pct)}%).`);
+  else parts.push(`This is the baseline assessment (${Math.round(os[0].pct)}%).`);
+  const mi=mostImproved(sid); if(mi) parts.push(`Most improved skill: ${SKILL_NAMES[mi.code]||mi.code} (▲ +${Math.round(mi.vsFirst)}% since the start).`);
+  const dec=biggestDecline(sid); if(dec) parts.push(`Watch: ${SKILL_NAMES[dec.code]||dec.code} declined (▼ ${Math.round(dec.vsPrev)}% vs the previous test).`);
+  const low=asp.filter(x=>x.pct<40).map(x=>x.a.name);
+  if(low.length) parts.push(`${low.join(' and ')} ${low.length>1?'are':'is'} below 40% (Novice) and need${low.length>1?'':'s'} targeted support.`);
+  return parts.join(' ');
+}
+
+/* ============================================================
+   VIEW SWITCH / RENDER DISPATCH
+============================================================ */
+function showView(){ document.getElementById('rosterView').hidden=currentView!=='roster'; document.getElementById('studentView').hidden=currentView!=='student'; }
+function render(){ document.getElementById('demoBanner').hidden=!DB.assessments.some(a=>a.demo);
+  if(currentView==='student'&&currentSid&&DB.students[currentSid]){ showView(); renderStudent(currentSid); }
+  else { currentView='roster'; showView(); renderRoster(); } }
+function openStudent(sid){ currentSid=sid; currentView='student'; showView(); renderStudent(sid); window.scrollTo({top:0,behavior:'smooth'}); }
+
+/* ============================================================
+   UPLOAD FLOW
+============================================================ */
+function openUpload(){ pending=null; document.getElementById('confirmImport').disabled=true;
+  document.getElementById('uploadBody').innerHTML=`
+    <div class="dropzone" id="dropzone">
+      <div style="font-size:34px">📄</div>
+      <div style="font-weight:700;margin:6px 0">Drop your .xlsx here, or click to browse</div>
+      <div class="small">Each worksheet = one assessment. The app reads the “type” and “Full” rows automatically.</div>
+    </div>`;
+  document.getElementById('uploadModal').hidden=false;
+  const dz=document.getElementById('dropzone');
+  dz.onclick=()=>document.getElementById('uploadFile').click();
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag'); if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+}
+async function handleFile(file){
+  const body=document.getElementById('uploadBody'); body.innerHTML='<div class="muted">⏳ Parsing workbook…</div>';
+  try{ const buf=await file.arrayBuffer(); const {assessments,warnings}=parseWorkbook(buf); pending={assessments,warnings}; renderUploadSummary(file.name); }
+  catch(e){ body.innerHTML=`<div class="warn">Could not read this file: ${esc(e.message||e)}. Make sure it is a valid .xlsx workbook.</div>`; }
+}
+function renderUploadSummary(fname){
+  const body=document.getElementById('uploadBody'); const {assessments,warnings}=pending;
+  let nw=0,up=0; const items=assessments.map(p=>{ const exists=DB.assessments.some(a=>!a.demo&&a.name.toLowerCase()===p.name.toLowerCase());
+    const isUpd=exists; if(isUpd)up++; else nw++;
+    const codes=Object.keys(p.skillMax).length; const asp=ASPECTS.filter(a=>p.aspectMax[a.key]>0).map(a=>a.key).join(', ');
+    return `<div class="summary-item"><span class="pill ${isUpd?'upd':'new'}">${isUpd?'UPDATE':'NEW'}</span>
+      <div style="flex:1"><b>${esc(p.name)}</b><div class="small muted">${p.roster.length} students · ${codes} skill codes · full marks ${p.fullTotal} · aspects: ${asp||'—'}</div></div></div>`; }).join('');
+  const warnHTML=warnings.length?`<div class="warn"><b>${warnings.length} sheet(s) skipped:</b><br>${warnings.map(esc).join('<br>')}</div>`:'';
+  body.innerHTML=`<div class="small muted" style="margin-bottom:8px">📁 ${esc(fname)}</div>
+    <div style="margin-bottom:10px"><b>${assessments.length}</b> valid assessment sheet(s) · <span style="color:#7ff0b5">${nw} new</span> · <span style="color:#c3b6ff">${up} to update</span></div>
+    ${warnHTML}${items||'<div class="muted">No valid sheets found.</div>'}`;
+  document.getElementById('confirmImport').disabled=assessments.length===0;
+}
+function confirmImport(){ if(!pending) return; purgeDemo(); let nw=0,up=0;
+  pending.assessments.forEach(p=>{ const r=mergeAssessment(p); r.status==='new'?nw++:up++; });
+  saveDB(); document.getElementById('uploadModal').hidden=true; pending=null; render();
+  showToast(`Imported: ${nw} new, ${up} updated.`); }
+
+/* ============================================================
+   MANAGE ASSESSMENTS
+============================================================ */
+function openManage(){ renderManage(); document.getElementById('manageModal').hidden=false; }
+function renderManage(){ const body=document.getElementById('manageBody'); const list=sortedAssessments();
+  if(!list.length){ body.innerHTML='<div class="muted">No assessments yet. Upload a workbook first.</div>'; return; }
+  body.innerHTML=`<div class="small muted" style="margin-bottom:10px">Edit the Academic year / Form / Term tags and the sequence number to control the chronological order used for trends and improvement deltas.</div>`
+    +list.map(a=>`<div class="manage-row" data-id="${a.id}">
+      <div class="mn">${esc(a.name)} ${a.demo?'<span class="pill upd">sample</span>':''}</div>
+      <div class="mfields">
+        <div><label>Academic year</label><input data-f="year" value="${esc(a.year||'')}"></div>
+        <div><label>Form</label><select data-f="form">${['S1','S2','S3'].map(f=>`<option ${a.form===f?'selected':''}>${f}</option>`).join('')}</select></div>
+        <div><label>Term</label><input data-f="term" value="${esc(a.term||'')}"></div>
+        <div><label>Sequence</label><input data-f="seq" type="number" value="${a.seq||0}"></div>
+      </div>
+      <div class="manage-foot"><button class="btn danger small" data-del="${a.id}">🗑 Delete</button></div>
+    </div>`).join('');
+}
+
+/* ============================================================
+   MISC UI
+============================================================ */
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2200); }
+function showConfirm(msg){ return new Promise(res=>{ document.getElementById('confirmMsg').textContent=msg; const m=document.getElementById('confirmModal'); m.hidden=false;
+  document.getElementById('confirmYes').onclick=()=>{m.hidden=true;res(true);}; document.getElementById('confirmNo').onclick=()=>{m.hidden=true;res(false);}; }); }
+function exportJSON(){ try{ const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='sciquest-backup.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); showToast('Backup downloaded'); }
+  catch(e){ showToast('Backup blocked in this sandbox — copy manually.'); } }
+async function importJSON(file){ try{ const txt=await file.text(); const d=JSON.parse(txt);
+  if(!d||!d.assessments||!d.students){ showToast('Not a valid SciQuest backup'); return; } d.remarks=d.remarks||{}; DB=d; saveDB(); currentView='roster'; render(); showToast('Data restored'); }
+  catch(e){ showToast('Could not read that file'); } }
+
+/* ============================================================
+   SAMPLE DATA (mirrors parsed structure)
+============================================================ */
+function seeded(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function loadDemo(){
+  DB=emptyDB();
+  const roster=[
+    ['A2026001','Chan Tai Man','1A-01'],['A2026002','Wong Mei Ling','1A-02'],['A2026003','Lee Chun Kit','1A-03'],
+    ['A2026004','Cheung Ka Yan','1A-04'],['A2026005','Ng Ho Yin','1A-05'],['A2026006','Lam Sze Wai','1A-06'],
+    ['A2026007','Tang Wai Lun','1A-07'],['A2026008','Fung Ka Ho','1A-08'],
+  ];
+  roster.forEach(r=>DB.students[r[0]]={sid:r[0],name:r[1],classNo:r[2]});
+  const abil=[0.72,0.58,0.80,0.50,0.66,0.46,0.85,0.62];
+  const trend=[0.05,0.07,0.02,0.09,-0.035,0.10,0.01,0.045];
+  const bias=[{R:0.05,E:-0.05,D:0.0,ENG:0.08},{R:-0.10,E:0.05,D:0.10,ENG:-0.05},{R:0.10,E:0.05,D:-0.05,ENG:0.0},
+    {R:-0.05,E:-0.10,D:0.05,ENG:0.10},{R:0.0,E:0.10,D:-0.10,ENG:0.05},{R:-0.10,E:0.0,D:0.10,ENG:-0.10},
+    {R:0.08,E:0.02,D:0.05,ENG:-0.02},{R:-0.02,E:0.08,D:-0.08,ENG:0.05}];
+  const prof={}; roster.forEach((r,i)=>prof[r[0]]={abil:abil[i],trend:trend[i],bias:bias[i]});
+  const rnd=seeded(20260924);
+  const defs=[
+    {name:'Force & Motion Chapter Test',form:'S1',term:'Term 1',skillMax:{R1:1,R2:1,R3:2,R4:1,E1:1,E2:1,E3:1,E4:1,E5:14,E6:7,E7:5,D1:6,ENG:20}},
+    {name:'Acid & Alkali Chapter Test',form:'S1',term:'Term 1',skillMax:{R1:2,R2:1,R3:2,E2:2,E3:2,E5:8,E6:5,D1:3,D2:6,D3:4,ENG:15}},
+    {name:'Cells & Human Body Test',form:'S1',term:'Term 2',skillMax:{R1:2,R2:2,R3:1,R4:2,E2:1,E3:3,E4:2,E7:4,D2:5,D3:3,D4:3,ENG:12}},
+  ];
+  defs.forEach((def,idx)=>{ const results={};
+    roster.forEach(r=>{ const sid=r[0]; if(idx===2&&sid==='A2026006') return; // absent example
+      const p=prof[sid]; const skillEarned={},aspectEarned={}; let total=0;
+      Object.entries(def.skillMax).forEach(([code,mx])=>{ const a=aspectOf(code);
+        let f=p.abil+(p.bias[a]||0)+p.trend*idx+(rnd()-0.5)*0.16; f=Math.max(0.05,Math.min(0.99,f));
+        let e=Math.max(0,Math.min(mx,Math.round(mx*f))); skillEarned[code]=e; aspectEarned[a]=(aspectEarned[a]||0)+e; total+=e; });
+      results[sid]={sid,name:DB.students[sid].name,classNo:DB.students[sid].classNo,skillEarned,aspectEarned,total}; });
+    const aspectMax={}; Object.entries(def.skillMax).forEach(([c,mx])=>{const a=aspectOf(c);aspectMax[a]=(aspectMax[a]||0)+mx;});
+    const fullTotal=Object.values(def.skillMax).reduce((s,v)=>s+v,0);
+    DB.assessments.push({id:'demo'+idx,name:def.name,year:'2026/27',form:def.form,term:def.term,seq:idx+1,createdAt:Date.now()+idx,
+      skillMax:def.skillMax,aspectMax,fullTotal,results,skillCodes:Object.keys(def.skillMax),demo:true}); });
+  saveDB();
+}
+
+/* ============================================================
+   WIRING
+============================================================ */
+function wire(){
+  document.getElementById('hintClose').onclick=()=>document.getElementById('hint').remove();
+  document.getElementById('search').addEventListener('input',renderRosterList);
+  document.getElementById('sortby').addEventListener('change',renderRosterList);
+  document.getElementById('rosterList').addEventListener('click',e=>{ const c=e.target.closest('[data-sid]'); if(c) openStudent(c.dataset.sid); });
+
+  document.getElementById('btnUpload').onclick=openUpload;
+  document.getElementById('uploadFile').addEventListener('change',e=>{ if(e.target.files[0]) handleFile(e.target.files[0]); e.target.value=''; });
+  document.getElementById('confirmImport').onclick=confirmImport;
+
+  document.getElementById('btnManage').onclick=openManage;
+  document.getElementById('manageBody').addEventListener('change',e=>{ const row=e.target.closest('[data-id]'); const f=e.target.dataset.f; if(!row||!f) return;
+    const a=DB.assessments.find(x=>x.id===row.dataset.id); if(!a) return; a[f]=f==='seq'?(+e.target.value||0):e.target.value; saveDB(); render(); });
+  document.getElementById('manageBody').addEventListener('click',async e=>{ const id=e.target.dataset.del; if(!id) return;
+    const a=DB.assessments.find(x=>x.id===id); if(await showConfirm(`Delete assessment “${a.name}”? Past results in it will be removed.`)){
+      DB.assessments=DB.assessments.filter(x=>x.id!==id); saveDB(); renderManage(); render(); showToast('Assessment deleted'); } });
+
+  const more=document.getElementById('morePop');
+  document.getElementById('btnMore').onclick=e=>{ e.stopPropagation(); more.hidden=!more.hidden; };
+  document.addEventListener('click',()=>more.hidden=true);
+  more.addEventListener('click',e=>e.stopPropagation());
+  document.getElementById('btnDemo').onclick=()=>{ more.hidden=true; loadDemo(); currentView='roster'; render(); showToast('Sample data loaded'); };
+  document.getElementById('btnExport').onclick=()=>{ more.hidden=true; exportJSON(); };
+  document.getElementById('btnImport').onclick=()=>{ more.hidden=true; document.getElementById('importFile').click(); };
+  document.getElementById('importFile').addEventListener('change',e=>{ if(e.target.files[0]) importJSON(e.target.files[0]); e.target.value=''; });
+  document.getElementById('btnClear').onclick=async()=>{ more.hidden=true; if(await showConfirm('Delete ALL stored data (roster + every assessment)? This cannot be undone.')){
+    DB=emptyDB(); saveDB(); try{localStorage.setItem('sq_cleared','1');}catch(e){} currentView='roster'; render(); showToast('All data cleared'); } };
+
+  document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{ b.closest('.overlay').hidden=true; });
+  document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{ if(e.target===o) o.hidden=true; }));
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.overlay').forEach(o=>o.hidden=true); });
+}
+
+/* ============================================================
+   INIT
+============================================================ */
+document.addEventListener('DOMContentLoaded',()=>{ wire();
+  const stored=loadDB();
+  if(stored){ DB=stored; DB.remarks=DB.remarks||{}; }
+  else { DB=emptyDB(); let cleared=false; try{ cleared=!!localStorage.getItem('sq_cleared'); }catch(e){} if(!cleared) loadDemo(); }
+  render();
+});
+</script>
+</body>
+</html>
