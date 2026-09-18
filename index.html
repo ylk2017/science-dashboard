@@ -3,268 +3,292 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SciQuest — Integrated Science Skill Mastery Tracker</title>
+<title>SciQuest ▚ Integrated Science Skill Mastery Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<!-- Firebase (loads from Google's CDN; blocked in this sandbox preview, works locally/hosted) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <style>
   :root{
-    --bg:#0b1020;--bg2:#0e1428;--panel:#141d33;--panel2:#1a2440;--line:#26304d;
-    --text:#e9edf8;--muted:#93a0bd;--muted2:#6b769a;--accent:#7c9cff;
-    --up:#22c55e;--down:#f0555f;--flat:#8a97b8;
-    --R:#8b5cf6;--E:#10b981;--D:#f59e0b;--ENG:#fb7185;
+    --bg:#03060f;--bg2:#070d1d;--panel:#0b1428;--panel2:#111d38;--line:#1c2c50;--line-hot:#2e4f86;
+    --text:#e7f2ff;--muted:#8ea4c9;--muted2:#61729a;
+    --accent:#3ce0ff;--accent2:#7c9cff;--accent3:#b47cff;
+    --up:#2ee6a8;--down:#ff5f6d;--flat:#8291b4;--amber:#ffb02e;
+    --R:#b47cff;--E:#19e5b6;--D:#ffb02e;--ENG:#ff6b93;
+    --grid:rgba(60,224,255,.055);
+    --hud:'Orbitron','Rajdhani',"Segoe UI",sans-serif;
+    --mono:'Share Tech Mono',ui-monospace,Consolas,monospace;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
-  body{background:radial-gradient(1200px 700px at 20% -10%,#182246 0%,var(--bg) 55%);color:var(--text);
-    font-family:"Segoe UI",Roboto,-apple-system,system-ui,"Noto Sans HK",sans-serif;line-height:1.45;min-height:100vh}
+  body{
+    background:
+      radial-gradient(900px 620px at 86% -6%,rgba(180,124,255,.16),transparent 62%),
+      radial-gradient(1100px 700px at 10% -10%,rgba(60,224,255,.15),transparent 60%),
+      linear-gradient(180deg,#050a16 0%,#03060f 60%);
+    color:var(--text);
+    font-family:'Rajdhani',"Segoe UI",Roboto,-apple-system,system-ui,"Noto Sans HK","Microsoft JhengHei",sans-serif;
+    font-size:15px;line-height:1.45;min-height:100vh;letter-spacing:.2px}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:46px 46px;
+    -webkit-mask-image:radial-gradient(circle at 50% -10%,#000 0%,transparent 88%);
+    mask-image:radial-gradient(circle at 50% -10%,#000 0%,transparent 88%)}
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:1;
+    background:repeating-linear-gradient(180deg,rgba(255,255,255,.016) 0 1px,transparent 1px 3px)}
+  main{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:18px}
   button{font-family:inherit;cursor:pointer}
-  code,pre{font-family:ui-monospace,Consolas,Menlo,monospace}
   .muted{color:var(--muted)}
   .small{font-size:12px}
+  .mono{font-family:var(--mono)}
+  @keyframes hudsweep{0%{transform:translateX(-110%)}100%{transform:translateX(110%)}}
+  @keyframes pulseDot{0%,100%{opacity:.45;transform:scale(.85)}50%{opacity:1;transform:scale(1.12)}}
+  @keyframes shimmer{0%{background-position:0% 0}100%{background-position:220% 0}}
+  @keyframes flick{0%,100%{opacity:1}50%{opacity:.55}}
 
-  /* Top bar */
+  /* ── Top bar ─────────────────────────────── */
   .topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:10px;
-    padding:10px 16px;background:linear-gradient(180deg,rgba(16,22,44,.96),rgba(16,22,44,.86));
-    backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-  .brand{display:flex;align-items:center;gap:10px}
-  .logo{font-size:26px;filter:drop-shadow(0 0 6px #7c9cff88)}
-  .t1{font-weight:800;font-size:18px;letter-spacing:.3px}
-  .t2{font-size:11px;color:var(--muted)}
+    padding:10px 18px;background:linear-gradient(180deg,rgba(6,12,26,.94),rgba(6,12,26,.78));
+    backdrop-filter:blur(9px);border-bottom:1px solid var(--line);overflow:hidden}
+  .topbar::after{content:"";position:absolute;left:0;bottom:0;height:1px;width:38%;
+    background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:hudsweep 5.5s linear infinite}
+  .brand{display:flex;align-items:center;gap:11px}
+  .logo{font-size:24px;filter:drop-shadow(0 0 8px #3ce0ffaa)}
+  .t1{font-family:var(--hud);font-weight:900;font-size:18px;letter-spacing:2.4px}
+  .t1 span{color:var(--accent);text-shadow:0 0 12px #3ce0ff88}
+  .t2{font-family:var(--mono);font-size:10.5px;color:var(--muted2);letter-spacing:1.4px;text-transform:uppercase}
   .actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-  .btn{background:linear-gradient(180deg,#31406e,#243258);color:#fff;border:1px solid #3a4a7d;border-radius:10px;
-    padding:9px 12px;font-weight:600;font-size:13px;white-space:nowrap}
-  .btn:hover{filter:brightness(1.12)}
-  .btn.ghost{background:transparent;border-color:var(--line);color:var(--text)}
-  .btn.danger{color:#ffd7da;border-color:#5a2730;background:linear-gradient(180deg,#5a2730,#3a1a20)}
-  .btn.small{padding:6px 10px;font-size:12px}
-  .cloudpill{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:8px 12px;font-size:12.5px;
-    font-weight:700;border:1px solid var(--line);background:var(--panel2);color:var(--muted);white-space:nowrap}
-  .cloudpill .dot{width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor}
-  .cloudpill.connecting{color:#ffe08a;border-color:#6b551a;background:#2a2410}
-  .cloudpill.live{color:#7ff0b5;border-color:#1d5a3f;background:#0f2a1e}
-  .cloudpill.error{color:#ffb3b8;border-color:#6b2730;background:#2c1720}
+  .storechip{font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--muted);border:1px solid var(--line);
+    background:rgba(10,19,38,.8);border-radius:999px;padding:4px 10px;white-space:nowrap}
+  .storechip b{color:var(--accent);font-weight:400}
+  .storechip.saving b{color:var(--amber)}
+  .storechip.err b{color:var(--down)}
+  .btn{background:linear-gradient(180deg,rgba(46,79,134,.92),rgba(15,27,53,.92));
+    color:#eaf4ff;border:1px solid var(--line-hot);border-radius:8px;padding:9px 14px;
+    font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:1px;white-space:nowrap;
+    clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px);transition:.15s}
+  .btn:hover{border-color:var(--accent);box-shadow:0 0 16px rgba(60,224,255,.3);transform:translateY(-1px)}
+  .btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+  .btn.ghost{background:linear-gradient(180deg,rgba(17,29,56,.6),rgba(6,11,24,.6));border-color:var(--line);color:var(--text)}
+  .btn.danger{color:#ffd7da;border-color:#6b2730;background:linear-gradient(180deg,#5a2027,#2c1017)}
+  .btn.warnb{color:#ffe6bd;border-color:#7d5a20;background:linear-gradient(180deg,#5a4318,#2c1f08)}
+  .btn.tiny{padding:6px 10px;font-size:11px;clip-path:none;border-radius:7px}
   .menu{position:relative}
-  .menu-pop{position:absolute;right:0;top:44px;background:var(--panel);border:1px solid var(--line);border-radius:12px;
-    padding:6px;display:flex;flex-direction:column;min-width:210px;box-shadow:0 18px 40px #0008;z-index:50}
-  .menu-pop button{background:transparent;border:0;color:var(--text);text-align:left;padding:9px 10px;border-radius:8px;font-size:13px}
-  .menu-pop button:hover{background:var(--panel2)}
+  .menu-pop{position:absolute;right:0;top:46px;background:rgba(9,16,32,.97);border:1px solid var(--line-hot);border-radius:12px;
+    padding:6px;display:flex;flex-direction:column;min-width:226px;box-shadow:0 18px 46px #000b,0 0 0 1px rgba(60,224,255,.08) inset;z-index:50}
+  .menu-pop button{background:transparent;border:0;color:var(--text);text-align:left;padding:9px 10px;border-radius:8px;font-size:13px;letter-spacing:.4px}
+  .menu-pop button:hover{background:rgba(60,224,255,.09);color:#fff}
   .menu-pop button.danger{color:#ff9aa2}
-  .hint{margin:10px 16px 0;background:#152039;border:1px solid var(--line);color:var(--muted);
-    border-radius:10px;padding:8px 12px;font-size:12px;display:flex;gap:8px;align-items:center;justify-content:space-between}
-  .hint .x{background:transparent;border:0;color:var(--muted);font-size:16px}
-  .banner{margin:10px 16px 0;background:linear-gradient(90deg,#2a2150,#1a2440);border:1px solid #45379a;color:#d9d2ff;
-    border-radius:10px;padding:8px 12px;font-size:12.5px}
-  main{max-width:1120px;margin:0 auto;padding:16px}
-  .sectionhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-  .h{font-size:20px;font-weight:800}
-  .statstrip{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;min-width:120px;flex:1}
-  .kpi .n{font-size:22px;font-weight:800}
-  .kpi .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
-  .controls input,.controls select{background:var(--panel2);border:1px solid var(--line);color:var(--text);
-    border-radius:9px;padding:9px 11px;font-size:13px;font-family:inherit}
-  .controls input{flex:1;min-width:180px}
+  .menu-pop .sep{height:1px;background:var(--line);margin:5px 4px}
+  .hint{position:relative;z-index:2;margin:12px 18px 0;background:rgba(11,22,44,.75);border:1px solid var(--line);color:var(--muted);
+    border-radius:10px;padding:9px 13px;font-size:12.5px;display:flex;gap:8px;align-items:center;justify-content:space-between}
+  .hint .x{background:transparent;border:0;color:var(--muted);font-size:17px}
+  .banner{position:relative;z-index:2;margin:12px 18px 0;background:linear-gradient(90deg,rgba(43,26,86,.85),rgba(10,20,40,.85));
+    border:1px solid #5a3ba8;color:#dfd4ff;border-radius:10px;padding:9px 13px;font-size:12.5px}
+  .alertbar{position:relative;z-index:2;display:flex;gap:11px;align-items:center;flex-wrap:wrap;
+    background:linear-gradient(90deg,rgba(70,50,10,.9),rgba(20,14,4,.85));border:1px solid #8a6a1e;color:#ffe6bd;
+    border-radius:11px;padding:10px 13px;font-size:12.8px;margin-bottom:13px}
+  .alertbar .ic{font-size:18px}
 
-  /* Roster cards */
-  .roster-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
-  .scard{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:14px;
-    padding:14px;cursor:pointer;transition:transform .12s,border-color .12s,box-shadow .12s}
-  .scard:hover{transform:translateY(-3px);border-color:#3d4d84;box-shadow:0 12px 30px #0006}
+  /* ── Roster ──────────────────────────────── */
+  .sectionhead{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .h{font-family:var(--hud);font-size:19px;font-weight:900;letter-spacing:2px;text-transform:uppercase}
+  .h em{font-style:normal;color:var(--accent);text-shadow:0 0 14px #3ce0ff66}
+  .codelegend{display:flex;gap:7px;flex-wrap:wrap;font-family:var(--mono);font-size:10.5px}
+  .codelegend b{font-weight:400;border:1px solid var(--line-hot);border-radius:999px;padding:3px 9px;background:rgba(10,19,38,.8);letter-spacing:.6px}
+  .statstrip{display:flex;gap:11px;flex-wrap:wrap;margin-bottom:13px}
+  .kpi{position:relative;background:linear-gradient(180deg,rgba(13,23,45,.9),rgba(6,11,24,.9));border:1px solid var(--line);
+    border-radius:12px;padding:11px 14px 11px 17px;min-width:132px;flex:1;overflow:hidden}
+  .kpi::before{content:"";position:absolute;left:0;top:10%;bottom:10%;width:3px;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+  .kpi.warn::before{background:var(--amber);box-shadow:0 0 12px var(--amber)}
+  .kpi .n{font-family:var(--hud);font-size:23px;font-weight:800;letter-spacing:1px}
+  .kpi .l{font-family:var(--mono);font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:1.4px}
+  .controls{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:15px}
+  .controls input,.controls select{background:rgba(10,19,38,.9);border:1px solid var(--line);color:var(--text);
+    border-radius:8px;padding:10px 12px;font-size:13.5px;font-family:inherit;letter-spacing:.4px}
+  .controls input:focus,.controls select:focus{outline:0;border-color:var(--accent);box-shadow:0 0 12px rgba(60,224,255,.22)}
+  .controls input{flex:1;min-width:190px}
+  .roster-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(292px,1fr));gap:13px}
+  .scard{position:relative;background:linear-gradient(160deg,rgba(15,26,50,.92),rgba(5,10,22,.94));border:1px solid var(--line);
+    border-radius:14px;padding:14px;cursor:pointer;transition:transform .14s,border-color .14s,box-shadow .14s;overflow:hidden}
+  .scard::after{content:"";position:absolute;right:-30px;top:-30px;width:80px;height:80px;border:1px solid rgba(60,224,255,.14);border-radius:50%}
+  .scard:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 14px 34px #000a,0 0 22px rgba(60,224,255,.14)}
   .scard-top{display:flex;gap:11px;align-items:center}
-  .avatar{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:18px;color:#0b1020;flex:none}
+  .avatar{width:47px;height:47px;border-radius:12px;display:grid;place-items:center;font-family:var(--hud);font-weight:800;
+    font-size:18px;color:#04070f;flex:none;box-shadow:0 0 16px rgba(60,224,255,.22)}
   .sinfo{flex:1;min-width:0}
-  .sname{font-weight:700;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .smeta{font-size:11px;color:var(--muted)}
+  .sname{font-weight:700;font-size:15.5px;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .smeta{font-family:var(--mono);font-size:10.5px;color:var(--muted2);letter-spacing:.8px}
   .savg{text-align:right;flex:none}
-  .savg .big{font-size:20px;font-weight:800}
-  .rankpill{font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;color:#0b1020;display:inline-block}
+  .savg .big{font-family:var(--hud);font-size:20px;font-weight:800}
+  .rankpill{font-family:var(--mono);font-size:9.5px;font-weight:400;padding:2px 8px;border-radius:999px;color:#04070f;
+    display:inline-block;letter-spacing:1px;text-transform:uppercase}
   .minibars{margin-top:12px;display:grid;gap:6px}
   .mb{display:flex;align-items:center;gap:8px}
-  .mbl{width:34px;font-size:10px;font-weight:800}
-  .mbt{flex:1;height:8px;background:#0b1226;border:1px solid var(--line);border-radius:6px;overflow:hidden}
-  .mbf{height:100%;border-radius:6px}
-  .mbv{width:34px;text-align:right;font-size:10.5px;color:var(--muted)}
-  .scard-foot{margin-top:11px;font-size:11px;color:var(--muted);border-top:1px solid var(--line);padding-top:9px}
+  .mbl{width:38px;font-family:var(--mono);font-size:10px;letter-spacing:.6px}
+  .mbt{flex:1;height:8px;background:#060c1a;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+  .mbf{height:100%;border-radius:5px;box-shadow:0 0 9px rgba(255,255,255,.18)}
+  .mbv{width:38px;text-align:right;font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+  .scard-foot{margin-top:11px;font-family:var(--mono);font-size:10.5px;color:var(--muted2);border-top:1px solid var(--line);padding-top:9px;letter-spacing:.7px}
   .trendA{font-size:13px}
-  .empty{background:var(--panel);border:1px dashed var(--line);border-radius:14px;padding:34px;text-align:center;color:var(--muted)}
-  .empty h3{color:var(--text);margin:0 0 6px}
+  .empty{background:rgba(11,20,40,.8);border:1px dashed var(--line-hot);border-radius:14px;padding:36px;text-align:center;color:var(--muted)}
+  .empty h3{font-family:var(--hud);letter-spacing:1.4px;color:var(--text);margin:0 0 6px}
 
-  /* Student view */
+  /* ── Student sheet ───────────────────────── */
   .backbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
   .grid2{display:grid;grid-template-columns:1fr;gap:14px}
   @media(min-width:900px){.grid2{grid-template-columns:1.05fr .95fr}}
-  .panel{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:16px;padding:16px}
-  .panel h3{margin:0 0 12px;font-size:14px;letter-spacing:.4px;text-transform:uppercase;color:#c4cef0}
-  .hero{position:relative;overflow:hidden;border-radius:16px;padding:16px;
-    background:linear-gradient(120deg,#241a4d 0%,#182246 45%,#10203f 100%);border:1px solid #3a3a86;box-shadow:0 0 0 1px #7c9cff22 inset}
-  .hero-top{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
-  .hero .avatar{width:64px;height:64px;font-size:26px}
-  .hero-name{font-size:22px;font-weight:800}
-  .hero-meta{font-size:12px;color:#b9c4ea}
-  .levelbox{margin-left:auto;text-align:center;background:rgba(9,13,30,.5);border:1px solid #3a4a7d;
-    border-radius:14px;padding:8px 14px;min-width:120px}
-  .levelbox .lv{font-size:11px;color:#b9c4ea;letter-spacing:1px}
-  .levelbox .rk{font-size:16px;font-weight:800}
-  .levelbox .av{font-size:26px;font-weight:800;line-height:1}
-  .xpwrap{margin-top:14px}
-  .xpbar{height:12px;background:rgba(9,13,30,.6);border:1px solid #3a4a7d;border-radius:999px;overflow:hidden}
-  .xpfill{height:100%;background:linear-gradient(90deg,#7c9cff,#a855f7);border-radius:999px}
-  .xplabel{display:flex;justify-content:space-between;font-size:11px;color:#c4cef0;margin-top:5px}
-  .badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-  .badge{background:rgba(9,13,30,.5);border:1px solid #3a4a7d;border-radius:999px;padding:5px 10px;font-size:11.5px;font-weight:700}
-  .aspect{border:1px solid var(--line);border-radius:13px;padding:12px;margin-bottom:11px;background:#0e1730}
-  .aspect-head{display:flex;align-items:center;gap:9px;margin-bottom:8px}
-  .aspect-ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:16px;flex:none}
-  .aspect-name{font-weight:800;font-size:14px}
-  .aspect-pct{margin-left:auto;font-size:20px;font-weight:800}
-  .bar{height:12px;background:#0b1226;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-  .barf{height:100%;border-radius:8px;transition:width .5s}
-  .aspect-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px;font-size:11.5px}
-  .confline{border-top:1px dashed var(--line);padding-top:7px}
-  .delta{font-weight:800;font-size:11.5px;white-space:nowrap}
+  .panel{position:relative;background:linear-gradient(180deg,rgba(13,23,45,.9),rgba(6,11,24,.92));border:1px solid var(--line);
+    border-radius:14px;padding:16px;box-shadow:inset 0 1px 0 rgba(124,156,255,.07),0 10px 30px rgba(0,0,0,.45)}
+  .panel::before,.panel::after{content:"";position:absolute;width:15px;height:15px;border:1px solid var(--accent);opacity:.5;pointer-events:none}
+  .panel::before{top:-1px;left:-1px;border-right:0;border-bottom:0;border-top-left-radius:14px}
+  .panel::after{bottom:-1px;right:-1px;border-left:0;border-top:0;border-bottom-right-radius:14px}
+  .panel h3{display:flex;align-items:center;gap:9px;margin:0 0 13px;font-family:var(--hud);font-size:12px;font-weight:700;
+    letter-spacing:2px;text-transform:uppercase;color:#cfe4ff}
+  .panel h3::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--accent);
+    box-shadow:0 0 11px var(--accent);animation:pulseDot 2.6s infinite}
+  .hero{position:relative;overflow:hidden;border-radius:16px;padding:17px;
+    background:linear-gradient(125deg,rgba(46,26,92,.92) 0%,rgba(12,26,58,.92) 48%,rgba(6,20,40,.92) 100%);
+    border:1px solid #46409c;box-shadow:0 0 0 1px rgba(60,224,255,.14) inset,0 14px 40px #000a}
+  .hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background-image:linear-gradient(rgba(60,224,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(60,224,255,.05) 1px,transparent 1px);
+    background-size:26px 26px}
+  .hero::after{content:"";position:absolute;top:0;left:0;height:2px;width:34%;
+    background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:hudsweep 4.5s linear infinite}
+  .hero-top{position:relative;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .hero .avatar{width:66px;height:66px;font-size:26px}
+  .hero-name{font-family:var(--hud);font-size:21px;font-weight:800;letter-spacing:1px}
+  .hero-meta{font-family:var(--mono);font-size:11px;color:#a8bde8;letter-spacing:1px}
+  .sysline{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--up);text-transform:uppercase;margin-bottom:3px}
+  .sysline i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--up);box-shadow:0 0 8px var(--up);margin-right:6px;animation:flick 1.8s infinite}
+  .levelbox{position:relative;margin-left:auto;text-align:center;background:rgba(4,8,20,.62);border:1px solid #3a4a7d;
+    border-radius:12px;padding:9px 16px;min-width:132px}
+  .levelbox .lv{font-family:var(--mono);font-size:10px;color:#a8bde8;letter-spacing:2.4px}
+  .levelbox .rk{font-family:var(--hud);font-size:15px;font-weight:800;letter-spacing:1.2px}
+  .levelbox .av{font-family:var(--hud);font-size:27px;font-weight:900;line-height:1.1}
+  .xpwrap{position:relative;margin-top:15px}
+  .xpbar{height:12px;background:rgba(4,8,20,.7);border:1px solid #3a4a7d;border-radius:999px;overflow:hidden}
+  .xpfill{height:100%;border-radius:999px;background:linear-gradient(90deg,#3ce0ff,#7c9cff,#b47cff,#3ce0ff);
+    background-size:220% 100%;animation:shimmer 4s linear infinite;box-shadow:0 0 14px rgba(60,224,255,.5)}
+  .xplabel{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:#b6c9ee;margin-top:6px;letter-spacing:.8px}
+  .badges{position:relative;display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+  .badge{background:rgba(4,8,20,.6);border:1px solid #3a4a7d;border-radius:999px;padding:5px 11px;font-size:11.5px;font-weight:700;letter-spacing:.4px}
+  .aspect{position:relative;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:11px;
+    background:linear-gradient(180deg,rgba(10,20,40,.9),rgba(6,11,24,.9))}
+  .aspect-head{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+  .aspect-ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;font-size:16px;flex:none}
+  .aspect-name{font-family:var(--hud);font-weight:700;font-size:13.5px;letter-spacing:1.2px;text-transform:uppercase}
+  .aspect-pct{margin-left:auto;font-family:var(--hud);font-size:20px;font-weight:800}
+  .bar{position:relative;height:11px;background:#060c1a;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .bar::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.06) 0 1px,transparent 1px 9px)}
+  .barf{height:100%;border-radius:6px;transition:width .55s ease;box-shadow:0 0 10px rgba(255,255,255,.2)}
+  .aspect-foot{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:9px;font-size:11.5px}
+  .delta{font-family:var(--mono);font-weight:400;font-size:11.5px;white-space:nowrap}
   .delta.up{color:var(--up)}.delta.down{color:var(--down)}.delta.flat{color:var(--flat)}
-  .dlabel{color:var(--muted);font-size:11px}
-  .lvup{color:#ffe08a;font-weight:800;font-size:11px;background:#3a2f10;border:1px solid #6b551a;border-radius:6px;padding:2px 7px}
-  .lvdn{color:#ffb3b8;font-weight:700;font-size:11px;background:#3a1a20;border:1px solid #6b2730;border-radius:6px;padding:2px 7px}
-  .baseline{color:#c4cef0;font-size:10.5px;background:#22305a;border:1px solid #3a4a7d;border-radius:6px;padding:2px 7px;font-weight:700}
-  .rankbadge{font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:999px;color:#0b1020}
-  .classavg{color:var(--muted);font-size:11px}
+  .dlabel{color:var(--muted2);font-family:var(--mono);font-size:10px;letter-spacing:.8px;text-transform:uppercase}
+  .lvup{color:#ffe08a;font-weight:700;font-size:10.5px;background:rgba(90,70,14,.5);border:1px solid #7d6420;border-radius:5px;padding:2px 7px}
+  .lvdn{color:#ffb3b8;font-weight:700;font-size:10.5px;background:rgba(90,26,32,.5);border:1px solid #7d2c36;border-radius:5px;padding:2px 7px}
+  .baseline{color:#bcd6ff;font-family:var(--mono);font-size:10px;background:rgba(28,50,96,.6);border:1px solid #3a4a7d;
+    border-radius:5px;padding:2px 7px;letter-spacing:.8px;text-transform:uppercase}
+  .rankbadge{font-family:var(--mono);font-size:9.5px;padding:2px 7px;border-radius:999px;color:#04070f;letter-spacing:.6px}
+  .classavg{color:var(--muted);font-family:var(--mono);font-size:10.5px}
+  .tagmix{font-family:var(--mono);font-size:10px;color:var(--muted2);letter-spacing:.6px;
+    border:1px dashed var(--line-hot);border-radius:5px;padding:1px 7px}
+  .wchip{font-family:var(--mono);font-size:9.5px;letter-spacing:.7px;padding:1px 7px;border-radius:5px;
+    border:1px solid #7d5a20;background:rgba(90,70,14,.35);color:#ffdca6;white-space:nowrap}
   .radar-wrap{display:flex;flex-direction:column;align-items:center}
-  .legend{display:flex;gap:16px;font-size:11.5px;color:var(--muted);margin-top:4px;flex-wrap:wrap;justify-content:center}
-  .legend .sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
-
-  /* Skill tree */
-  .skillgroup{margin-bottom:12px}
-  .skillgroup .gt{font-size:12px;font-weight:800;margin-bottom:7px;display:flex;align-items:center;gap:7px}
-  .skill{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px dashed var(--line)}
+  .legend{display:flex;gap:15px;font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:6px;flex-wrap:wrap;justify-content:center;letter-spacing:.6px}
+  .legend .sw{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px;box-shadow:0 0 8px currentColor}
+  .skillgroup{margin-bottom:13px}
+  .skillgroup .gt{font-family:var(--hud);font-size:11.5px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;
+    margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  .skill{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px dashed var(--line)}
   .skill:first-child{border-top:0}
-  .skill .code{width:38px;font-weight:800;font-size:12px;flex:none}
+  .skill .code{width:42px;font-family:var(--mono);font-size:12px;flex:none;letter-spacing:.6px}
   .skill .body{flex:1;min-width:0}
-  .skill .nm{font-size:12px;color:#d7def5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .skill .bar{height:8px;margin-top:4px}
-  .skill .rt{flex:none;text-align:right;min-width:124px}
-  .skill .rp{font-weight:800;font-size:13px}
-  .skdeltas{display:flex;gap:6px;justify-content:flex-end;margin-top:2px;align-items:center}
-  .skdeltas .dlabel{min-width:34px;text-align:right}
-
-  /* Insight callouts */
+  .skill .nm{font-size:13px;color:#d3e2ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .skill .bar{height:8px;margin-top:5px}
+  .skill .rt{flex:none;text-align:right;min-width:100px}
+  .skill .rp{font-family:var(--hud);font-weight:800;font-size:13px}
+  .skdeltas{display:flex;gap:6px;justify-content:flex-end;margin-top:2px}
+  .chip{font-family:var(--mono);font-size:9px;letter-spacing:.9px;padding:1px 6px;border-radius:4px;
+    border:1px solid var(--line-hot);color:var(--muted);margin-left:6px;vertical-align:1px;text-transform:uppercase}
+  .chip.broad{border-color:#5b6ea8;color:#bcd6ff;background:rgba(28,50,96,.45)}
+  .chip.man{border-color:#2e6f8e;color:#b6e6ff;background:rgba(10,50,70,.5)}
   .callout{display:flex;gap:11px;align-items:flex-start;border-radius:12px;padding:12px;margin-bottom:10px;border:1px solid}
-  .co-good{background:#0f2a1e;border-color:#1d5a3f}
-  .co-warn{background:#2c1720;border-color:#6b2730}
+  .co-good{background:linear-gradient(180deg,rgba(11,48,36,.85),rgba(6,20,18,.85));border-color:#1c6a4c}
+  .co-warn{background:linear-gradient(180deg,rgba(52,20,30,.85),rgba(24,8,14,.85));border-color:#7d2c36}
   .callout .ic{font-size:22px}
-  .callout .tt{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:800}
-  .callout .mn{font-weight:800;font-size:14px;margin:2px 0}
-
-  /* Assessment rows */
-  .assess-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px dashed var(--line);font-size:13px}
+  .callout .tt{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:1.6px;color:var(--muted)}
+  .callout .mn{font-weight:700;font-size:14.5px;margin:3px 0}
+  .assess-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px dashed var(--line);font-size:13.5px}
   .assess-row:first-child{border-top:0}
   .assess-row .nm{flex:1;min-width:0}
-  .assess-row .tag{font-size:10.5px;color:var(--muted);display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:2px}
-  .assess-row .sc{font-weight:800}
-  .assess-row .pc{width:74px;text-align:right}
-  .miniprog{height:6px;background:#0b1226;border:1px solid var(--line);border-radius:4px;overflow:hidden;margin-top:3px}
-
-  /* Assessment type / analysis scope pills */
-  .typepill,.scopepill{font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px;border:1px solid;display:inline-flex;align-items:center;gap:4px}
-  .typepill.monthly{background:#102a42;color:#93c5fd;border-color:#1d4ed8}
-  .typepill.summative{background:#3a2f10;color:#fde68a;border-color:#6b551a}
-  .typepill.other{background:#172033;color:#c4cef0;border-color:#3a4a7d}
-  .scopepill.included{background:#0f2a1e;color:#7ff0b5;border-color:#1d5a3f}
-  .scopepill.excluded{background:#2c1720;color:#ffb3b8;border-color:#6b2730}
-  .scopepill.manual{background:#2a2350;color:#c3b6ff;border-color:#45379a}
-
-  /* Confidence check */
-  .conf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px;margin-bottom:12px}
-  .conf-card{border:1px solid var(--line);background:#0e1730;border-radius:12px;padding:10px}
-  .conf-card .top{display:flex;align-items:center;justify-content:space-between;gap:8px}
-  .conf-card .name{font-weight:800;font-size:12px}
-  .conf-card .score{font-size:20px;font-weight:900}
-  .conf-card .sub{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}
-  .confbar{height:7px;background:#0b1226;border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-top:8px}
-  .confbar .fill{height:100%;border-radius:5px;background:linear-gradient(90deg,#38bdf8,#7c9cff)}
-  .conf-form{border:1px solid #3a4a7d;background:#0e1730;border-radius:14px;padding:12px;margin-top:10px}
-  .conf-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin-bottom:10px}
-  .conf-fields label{font-size:10.5px;color:var(--muted);display:block;margin-bottom:3px}
-  .conf-fields input,.conf-fields select{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);
-    border-radius:8px;padding:7px;font-size:12.5px;font-family:inherit}
-  .slider-block{border-top:1px dashed var(--line);padding-top:10px;margin-top:8px}
-  .slider-title{font-size:12px;font-weight:800;margin:0 0 7px}
-  .slider-row{display:grid;grid-template-columns:42px 1fr 32px;gap:8px;align-items:center;margin:7px 0}
-  .slider-row .c{font-weight:800;font-size:12px}
-  .slider-row input[type="range"]{width:100%;accent-color:#7c9cff}
-  .slider-row .conf-num{font-weight:900;text-align:right}
-  .confidence-history{display:grid;gap:7px;margin-top:10px}
-  .conf-history-row{display:flex;gap:8px;align-items:center;border:1px solid var(--line);background:#0e1730;border-radius:10px;padding:8px}
-  .conf-history-row .main{flex:1;min-width:0}
-  .conf-history-row .title{font-weight:800;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .conf-history-row .meta{font-size:10.5px;color:var(--muted)}
-  .conf-scale{font-size:11px;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:8px;background:#0b1226;margin-bottom:10px}
-  .confidence-note{font-size:11.5px;color:var(--muted);margin-bottom:8px}
-
-  /* Skill change table */
-  .tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:#0e1730}
-  table.skilltable{width:100%;border-collapse:collapse;font-size:12px;min-width:620px}
-  .skilltable th,.skilltable td{padding:8px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
-  .skilltable th{color:#c4cef0;background:#111a32;font-size:10.5px;text-transform:uppercase;letter-spacing:.35px}
-  .skilltable tr:last-child td{border-bottom:0}
-  .skilltable .codecell{font-weight:900}
-  .skilltable .right{text-align:right}
-  .skilltable .skillnm{color:#d7def5}
-  .change-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:10px}
-  .change-mini{border:1px solid var(--line);background:#0e1730;border-radius:12px;padding:10px}
-  .change-mini .label{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
-  .change-mini .main{font-size:13px;font-weight:900;margin-top:3px}
-
-  /* Remarks */
-  .remark-area{width:100%;background:#0b1226;border:1px solid var(--line);color:var(--text);border-radius:10px;
-    padding:11px;font-family:inherit;font-size:13px;line-height:1.5;min-height:120px;resize:vertical}
+  .assess-row .tag{font-family:var(--mono);font-size:10px;color:var(--muted2);letter-spacing:.7px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .assess-row .sc{font-family:var(--mono);font-size:12.5px}
+  .assess-row .pc{width:76px;text-align:right;font-family:var(--hud)}
+  .miniprog{height:6px;background:#060c1a;border:1px solid var(--line);border-radius:4px;overflow:hidden;margin-top:4px}
+  .remark-area{width:100%;background:rgba(4,9,20,.85);border:1px solid var(--line);color:var(--text);border-radius:10px;
+    padding:11px;font-family:var(--mono);font-size:12.5px;line-height:1.65;min-height:126px;resize:vertical}
+  .remark-area:focus{outline:0;border-color:var(--accent);box-shadow:0 0 12px rgba(60,224,255,.2)}
   .row-between{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
-
-  /* Modals */
-  .overlay{position:fixed;inset:0;background:rgba(4,7,18,.72);backdrop-filter:blur(3px);z-index:80;display:grid;place-items:center;padding:16px}
-  .modal{background:var(--panel);border:1px solid var(--line);border-radius:16px;max-width:680px;width:100%;max-height:88vh;
-    overflow:auto;box-shadow:0 30px 70px #000a}
+  /* ── modals ─────────────────────────────── */
+  .overlay{position:fixed;inset:0;background:rgba(2,5,12,.76);backdrop-filter:blur(4px);z-index:80;display:grid;place-items:center;padding:16px}
+  .modal{background:linear-gradient(180deg,rgba(12,21,42,.98),rgba(6,11,24,.98));border:1px solid var(--line-hot);border-radius:14px;
+    max-width:720px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 30px 80px #000c,0 0 0 1px rgba(60,224,255,.1) inset}
   .modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);
-    position:sticky;top:0;background:var(--panel);z-index:2}
-  .modal-head h3{margin:0;font-size:16px}
+    position:sticky;top:0;background:rgba(9,16,32,.98);z-index:3}
+  .modal-head h3{margin:0;font-family:var(--hud);font-size:14px;letter-spacing:1.6px;text-transform:uppercase}
   .modal-body{padding:16px}
-  .modal-foot{padding:14px 16px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:var(--panel)}
+  .modal-foot{padding:14px 16px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;align-items:center;
+    position:sticky;bottom:0;background:rgba(9,16,32,.98);flex-wrap:wrap}
   .close-x{background:transparent;border:0;color:var(--muted);font-size:22px}
-  .dropzone{border:2px dashed #3a4a7d;border-radius:14px;padding:30px;text-align:center;color:var(--muted);background:#0e1730;cursor:pointer}
-  .dropzone.drag{border-color:var(--accent);background:#152246;color:var(--text)}
-  .summary-item{display:flex;gap:10px;align-items:center;padding:9px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:#0e1730}
-  .pill{font-size:10.5px;font-weight:800;padding:2px 9px;border-radius:999px}
-  .pill.new{background:#123a2a;color:#7ff0b5;border:1px solid #1d5a3f}
-  .pill.upd{background:#2a2350;color:#c3b6ff;border:1px solid #45379a}
-  .warn{background:#2c1720;border:1px solid #6b2730;color:#ffc4c9;border-radius:10px;padding:9px 11px;font-size:12.5px;margin-bottom:8px}
-  .okbox{background:#0f2a1e;border:1px solid #1d5a3f;color:#c9f7dd;border-radius:10px;padding:9px 11px;font-size:12.5px;margin-bottom:8px}
-
-  /* Manage modal */
-  .manage-row{border:1px solid var(--line);border-radius:12px;padding:11px;margin-bottom:9px;background:#0e1730}
-  .manage-row .mn{font-weight:800;font-size:13px;margin-bottom:8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-  .mfields{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;align-items:end}
-  .mfields label{font-size:10.5px;color:var(--muted);display:block;margin-bottom:3px}
-  .mfields input,.mfields select{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:7px;font-size:12.5px;font-family:inherit}
-  .checkline{display:flex!important;gap:7px;align-items:center;color:#d7def5!important;font-size:12px!important;margin:0!important}
-  .checkline input{width:auto!important}
+  .dropzone{border:2px dashed var(--line-hot);border-radius:14px;padding:30px;text-align:center;color:var(--muted);
+    background:rgba(10,19,38,.75);cursor:pointer;transition:.15s}
+  .dropzone.drag{border-color:var(--accent);background:rgba(20,44,80,.8);color:var(--text);box-shadow:0 0 24px rgba(60,224,255,.22) inset}
+  .steptitle{display:flex;align-items:center;gap:9px;font-family:var(--hud);font-size:11.5px;letter-spacing:1.8px;
+    text-transform:uppercase;color:#cfe4ff;margin:16px 0 9px}
+  .steptitle b{font-family:var(--mono);font-weight:400;font-size:10px;color:#04070f;background:var(--accent);
+    border-radius:4px;padding:1px 7px;letter-spacing:1px}
+  .sheetcfg{border:1px solid var(--line);border-radius:11px;padding:11px;margin-bottom:9px;background:rgba(10,19,38,.75)}
+  .sheetcfg .sh{display:flex;gap:8px;align-items:center;margin-bottom:9px;flex-wrap:wrap}
+  .fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;align-items:end}
+  .fgrid label,.mfields label,.wgrid label{font-family:var(--mono);font-size:10px;color:var(--muted2);display:block;
+    margin-bottom:4px;letter-spacing:.8px;text-transform:uppercase}
+  .fgrid input,.fgrid select,.mfields input,.mfields select,.wgrid input,.maprow select{width:100%;background:rgba(6,12,26,.92);
+    border:1px solid var(--line);color:var(--text);border-radius:7px;padding:7px 8px;font-size:12.5px;font-family:inherit}
+  .fgrid input:focus,.fgrid select:focus,.wgrid input:focus,.maprow select:focus{outline:0;border-color:var(--accent)}
+  .wgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:9px}
+  .wgrid .wcell{border:1px solid var(--line);border-radius:8px;padding:7px;background:rgba(6,12,26,.6)}
+  .wgrid input{font-family:var(--mono);text-align:center}
+  .codechips{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+  .cc{font-family:var(--mono);font-size:9.5px;padding:2px 7px;border-radius:4px;border:1px solid;letter-spacing:.6px}
+  .cc.bad{color:#ffc4c9;border-color:#7d2c36;background:rgba(80,20,30,.4)}
+  .pill{font-family:var(--mono);font-size:9.5px;padding:3px 9px;border-radius:999px;letter-spacing:1px;white-space:nowrap}
+  .pill.new{background:rgba(11,58,42,.8);color:#7ff0b5;border:1px solid #1d5a3f}
+  .pill.upd{background:rgba(42,35,80,.8);color:#c3b6ff;border:1px solid #45379a}
+  .pill.bad{background:rgba(80,20,30,.7);color:#ffc4c9;border:1px solid #7d2c36}
+  .warn{background:rgba(52,20,30,.85);border:1px solid #7d2c36;color:#ffc4c9;border-radius:10px;padding:9px 11px;font-size:12.5px;margin-bottom:9px}
+  .note{background:rgba(10,32,56,.85);border:1px solid #2e6f8e;color:#b6e6ff;border-radius:10px;padding:9px 11px;font-size:12.5px;margin-bottom:9px}
+  .maprow{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px;
+    margin-bottom:8px;background:rgba(10,19,38,.75);flex-wrap:wrap}
+  .maprow .lbl{flex:1;min-width:150px}
+  .maprow .raw{font-family:var(--mono);font-size:13px;color:#ffdca6}
+  .maprow .sub{font-family:var(--mono);font-size:10px;color:var(--muted2);letter-spacing:.6px}
+  .maprow select{max-width:290px;flex:1.2;min-width:200px}
+  .maprow.done{border-color:#1c6a4c;background:rgba(11,48,36,.5)}
+  .sug{font-family:var(--mono);font-size:9.5px;color:#b6e6ff;border:1px dashed #2e6f8e;border-radius:4px;padding:1px 6px}
+  .manage-row{border:1px solid var(--line);border-radius:12px;padding:11px;margin-bottom:9px;background:rgba(10,19,38,.75)}
+  .manage-row .mn{font-weight:700;font-size:13.5px;margin-bottom:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .mfields{display:grid;grid-template-columns:repeat(auto-fit,minmax(124px,1fr));gap:8px;align-items:end}
   .manage-foot{display:flex;justify-content:space-between;align-items:center;margin-top:9px;gap:8px;flex-wrap:wrap}
-  pre.codeblk{background:#0b1226;border:1px solid var(--line);border-radius:10px;padding:11px;font-size:11.5px;overflow:auto;white-space:pre;color:#c9d4f5;margin:0}
-  details.setup{border:1px solid var(--line);border-radius:10px;padding:8px 11px;background:#0e1730;margin-bottom:12px}
-  details.setup summary{cursor:pointer;font-weight:700;font-size:13px}
-  details.setup ol{margin:9px 0;padding-left:20px;font-size:12.5px;color:#d7def5}
-  details.setup li{margin-bottom:6px}
-  .field{margin-bottom:12px}
-  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;font-weight:700}
-  .field textarea{width:100%;min-height:120px;background:#0b1226;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px;font-family:ui-monospace,monospace;font-size:12px;resize:vertical}
-  .authrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#0e1730;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:12px}
-  .btnrow{display:flex;gap:8px;flex-wrap:wrap}
-  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#182246;border:1px solid #3a4a7d;
-    color:#fff;padding:11px 18px;border-radius:10px;z-index:120;font-size:13px;box-shadow:0 12px 30px #0008;opacity:0;transition:opacity .25s,transform .25s;max-width:90vw;text-align:center}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:rgba(12,26,54,.97);border:1px solid var(--accent);
+    color:#fff;padding:11px 20px;border-radius:9px;z-index:120;font-family:var(--mono);font-size:12.5px;letter-spacing:.8px;
+    box-shadow:0 12px 34px #000b,0 0 20px rgba(60,224,255,.22);opacity:0;transition:opacity .25s,transform .25s}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+  optgroup{background:#0a1326;color:var(--muted);font-family:var(--mono);font-size:11px}
+  option{background:#0a1326;color:var(--text);font-family:inherit}
   [hidden]{display:none!important}
 </style>
 </head>
@@ -272,36 +296,46 @@
 
 <header class="topbar">
   <div class="brand">
-    <span class="logo">⚔️</span>
-    <div><div class="t1">SciQuest</div><div class="t2">Integrated Science · Skill Mastery Tracker</div></div>
+    <span class="logo">🛰️</span>
+    <div><div class="t1">SCI<span>QUEST</span></div><div class="t2">Integrated Science · Skill Mastery Telemetry</div></div>
   </div>
   <div class="actions">
-    <button class="cloudpill" id="cloudPill"><span class="dot"></span>☁️ Local only</button>
-    <button class="btn" id="btnUpload">⬆️ Upload results</button>
-    <button class="btn ghost" id="btnManage">🗂️ Assessments</button>
+    <span class="storechip" id="storeChip" title="Where your data is stored">◍ <b>init…</b></span>
+    <button class="btn" id="btnUpload">⬆ Upload results</button>
+    <button class="btn ghost" id="btnManage">🗂 Assessments</button>
     <div class="menu">
       <button class="btn ghost" id="btnMore">⋯</button>
       <div class="menu-pop" id="morePop" hidden>
-        <button id="btnCloud">☁️ Cloud storage…</button>
+        <button id="btnTagMap">🏷 Tag mapping <span id="tagMapCount" class="mono small"></span></button>
+        <div class="sep"></div>
         <button id="btnDemo">✨ Load sample data</button>
         <button id="btnExport">💾 Backup (JSON)</button>
         <button id="btnImport">📥 Restore (JSON)</button>
-        <button id="btnClear" class="danger">🗑️ Clear local cache</button>
+        <div class="sep"></div>
+        <button id="btnClear" class="danger">🗑 Clear all data</button>
       </div>
     </div>
   </div>
 </header>
 
 <div class="hint" id="hint">
-  ☁️ Shared cloud storage lets every science teacher read &amp; add results, remarks and confidence checks.
-  Click <b>☁️ Local only</b> to connect Firebase. Without it, data stays in this browser only.
+  <span>▚ Data core: <b>IndexedDB</b> (auto-migrated from localStorage, with in-memory fallback in sandboxed previews). Tags may be broad (<b class="mono">R E D ENG</b>) or detailed (<b class="mono">R1–R4, E1–E7, D1–D4</b>) — anything unrecognised can be hand-assigned in <b>Tag mapping</b>.</span>
   <button class="x" id="hintClose">×</button>
 </div>
-<div class="banner" id="demoBanner" hidden>✨ Showing sample data. Upload your own workbook, connect cloud storage, or clear the cache to start fresh.</div>
+<div class="banner" id="demoBanner" hidden>✨ Simulation mode — showing sample data. Upload your own workbook, or clear all data to start fresh.</div>
 
 <main>
   <section id="rosterView">
-    <div class="sectionhead"><div class="h">🛡️ Class Overview</div></div>
+    <div class="alertbar" id="unmapBar" hidden></div>
+    <div class="sectionhead">
+      <div class="h">◈ Class <em>Overview</em></div>
+      <div class="codelegend">
+        <b style="color:var(--R)">R · R1–R4 Reasoning</b>
+        <b style="color:var(--E)">E · E1–E7 Experimenting</b>
+        <b style="color:var(--D)">D · D1–D4 Data</b>
+        <b style="color:var(--ENG)">ENG English</b>
+      </div>
+    </div>
     <div class="statstrip" id="rosterStats"></div>
     <div class="controls">
       <input id="search" type="text" placeholder="🔍 Search name, class or SID…">
@@ -315,15 +349,17 @@
     </div>
     <div id="rosterList"></div>
   </section>
+
   <section id="studentView" hidden></section>
 </main>
 
 <!-- Upload modal -->
 <div class="overlay" id="uploadModal" hidden>
   <div class="modal">
-    <div class="modal-head"><h3>⬆️ Upload assessment workbook</h3><button class="close-x" data-close>×</button></div>
+    <div class="modal-head"><h3>⬆ Upload · weight · map</h3><button class="close-x" data-close>×</button></div>
     <div class="modal-body" id="uploadBody"></div>
     <div class="modal-foot">
+      <span class="small muted mono" id="uploadStatus" style="margin-right:auto"></span>
       <button class="btn ghost" data-close>Cancel</button>
       <button class="btn" id="confirmImport" disabled>Confirm import</button>
     </div>
@@ -333,25 +369,28 @@
 <!-- Manage modal -->
 <div class="overlay" id="manageModal" hidden>
   <div class="modal">
-    <div class="modal-head"><h3>🗂️ Assessments &amp; analysis timeline</h3><button class="close-x" data-close>×</button></div>
+    <div class="modal-head"><h3>🗂 Assessments · timeline · weighting</h3><button class="close-x" data-close>×</button></div>
     <div class="modal-body" id="manageBody"></div>
     <div class="modal-foot"><button class="btn" data-close>Done</button></div>
   </div>
 </div>
 
-<!-- Cloud modal -->
-<div class="overlay" id="cloudModal" hidden>
+<!-- Tag mapping modal -->
+<div class="overlay" id="tagModal" hidden>
   <div class="modal">
-    <div class="modal-head"><h3>☁️ Shared cloud storage</h3><button class="close-x" data-close>×</button></div>
-    <div class="modal-body" id="cloudBody"></div>
-    <div class="modal-foot"><button class="btn" data-close>Close</button></div>
+    <div class="modal-head"><h3>🏷 Tag mapping console</h3><button class="close-x" data-close>×</button></div>
+    <div class="modal-body" id="tagBody"></div>
+    <div class="modal-foot">
+      <button class="btn ghost tiny" id="btnSuggestAll" style="margin-right:auto">⤳ Auto-suggest all</button>
+      <button class="btn" data-close>Done</button>
+    </div>
   </div>
 </div>
 
 <!-- Confirm modal -->
 <div class="overlay" id="confirmModal" hidden>
-  <div class="modal" style="max-width:440px">
-    <div class="modal-head"><h3 id="confirmTitle">Please confirm</h3></div>
+  <div class="modal" style="max-width:430px">
+    <div class="modal-head"><h3>Please confirm</h3></div>
     <div class="modal-body"><p id="confirmMsg" style="margin:0"></p></div>
     <div class="modal-foot"><button class="btn ghost" id="confirmNo">Cancel</button><button class="btn danger" id="confirmYes">Confirm</button></div>
   </div>
@@ -362,897 +401,1083 @@
 <div class="toast" id="toast"></div>
 
 <script>
-/* ============================================================ TAXONOMY ============================================================ */
+/* ============================================================
+   0 · STORAGE CORE — IndexedDB ▸ localStorage ▸ memory
+============================================================ */
+const Store=(()=>{
+  const DBN='sciquest',STORE='kv',VER=1;
+  let idb=null,mode='memory',mem={};
+  function tryLS(){ try{ localStorage.setItem('__sq_t','1'); localStorage.removeItem('__sq_t'); return true; }catch(e){ return false; } }
+  function init(){
+    return new Promise(res=>{
+      let done=false; const finish=m=>{ if(done)return; done=true; mode=m; res(m); };
+      if(!('indexedDB' in window)) return finish(tryLS()?'ls':'memory');
+      let req; try{ req=indexedDB.open(DBN,VER); }catch(e){ return finish(tryLS()?'ls':'memory'); }
+      req.onupgradeneeded=()=>{ const d=req.result; if(!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE); };
+      req.onsuccess=()=>{ idb=req.result; finish('idb'); };
+      req.onerror=req.onblocked=()=>finish(tryLS()?'ls':'memory');
+      setTimeout(()=>finish(tryLS()?'ls':'memory'),3000);
+    });
+  }
+  function idbOp(m,fn){ return new Promise((res,rej)=>{ try{
+    const tx=idb.transaction(STORE,m),st=tx.objectStore(STORE),r=fn(st);
+    r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); tx.onabort=()=>rej(tx.error);
+  }catch(e){ rej(e); } }); }
+  async function get(key){
+    if(mode==='idb'){ try{ const v=await idbOp('readonly',st=>st.get(key)); return v===undefined?null:v; }catch(e){} }
+    if(mode==='ls'||mode==='idb'){ try{ const s=localStorage.getItem('sq_'+key); return s?JSON.parse(s):null; }catch(e){ return null; } }
+    return mem[key]===undefined?null:mem[key];
+  }
+  async function set(key,val){
+    if(mode==='idb'){ await idbOp('readwrite',st=>st.put(val,key)); return 'idb'; }
+    if(mode==='ls'){ localStorage.setItem('sq_'+key,JSON.stringify(val)); return 'ls'; }
+    mem[key]=val; return 'memory';
+  }
+  async function del(key){
+    if(mode==='idb'){ try{ await idbOp('readwrite',st=>st.delete(key)); }catch(e){} }
+    try{ localStorage.removeItem('sq_'+key); }catch(e){}
+    delete mem[key];
+  }
+  return {init,get,set,del,get mode(){return mode;}};
+})();
+const STORE_LABEL={idb:'IndexedDB',ls:'localStorage',memory:'memory only'};
+let saveTimer=null,saveErr=false;
+function storeChip(state){
+  const el=document.getElementById('storeChip'); if(!el) return;
+  el.className='storechip'+(state==='saving'?' saving':'')+(state==='err'?' err':'');
+  const m=STORE_LABEL[Store.mode]||Store.mode;
+  el.innerHTML=state==='saving'?`◌ <b>${m} · saving…</b>`:state==='err'?`⚠ <b>${m} · write failed</b>`:`◍ <b>${m} · saved</b>`;
+}
+function saveDB(){ /* debounced async persist */
+  storeChip('saving'); clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{
+    try{ await Store.set('main',DB); storeChip('ok'); saveErr=false; }
+    catch(e){ storeChip('err'); if(!saveErr){ saveErr=true; showToast('Storage write failed — use Backup (JSON)'); } }
+  },300);
+}
+
+/* ============================================================
+   1 · TAXONOMY / CONSTANTS
+============================================================ */
 const ASPECTS=[
-  {key:'R',name:'Reasoning',full:'Scientific Reasoning',raw:'#8b5cf6',icon:'🧠'},
-  {key:'E',name:'Experimenting',full:'Experimenting',raw:'#10b981',icon:'⚗️'},
-  {key:'D',name:'Data Processing',full:'Data Processing',raw:'#f59e0b',icon:'📊'},
-  {key:'ENG',name:'English',full:'Scientific English',raw:'#fb7185',icon:'📖'},
+  {key:'R',  name:'Reasoning',       full:'Scientific Reasoning', color:'var(--R)',   raw:'#b47cff', icon:'🧠'},
+  {key:'E',  name:'Experimenting',   full:'Experimenting',        color:'var(--E)',   raw:'#19e5b6', icon:'⚗️'},
+  {key:'D',  name:'Data Processing', full:'Data Processing',      color:'var(--D)',   raw:'#ffb02e', icon:'📊'},
+  {key:'ENG',name:'English',         full:'Scientific English',   color:'var(--ENG)', raw:'#ff6b93', icon:'📖'},
 ];
-const SUBSKILLS={R:['R1','R2','R3','R4'],E:['E1','E2','E3','E4','E5','E6','E7'],D:['D1','D2','D3','D4'],ENG:['ENG']};
+const ASPECT_RAW={R:'#b47cff',E:'#19e5b6',D:'#ffb02e',ENG:'#ff6b93'};
+const ASPECT_BY_KEY={}; ASPECTS.forEach(a=>ASPECT_BY_KEY[a.key]=a);
+const IGNORE='__IGNORE__';
+const SUBSKILLS={R:['R','R1','R2','R3','R4'],E:['E','E1','E2','E3','E4','E5','E6','E7'],D:['D','D1','D2','D3','D4'],ENG:['ENG']};
+const BROAD_CODES=new Set(['R','E','D','ENG']);
 const SKILL_NAMES={
+  R:'Reasoning — broad tag (no sub-skill specified)',
   R1:'Inducing a trend/model from data',R2:'Deducing a result from a model',R3:'Inferring the best explanation',R4:'Deciding based on probability',
+  E:'Experimenting — broad tag (no sub-skill specified)',
   E1:'Formulating a hypothesis',E2:'Identifying variables',E3:'Qualitative & quantitative observation',E4:'Accuracy & precision',
   E5:'Designing a controlled experiment',E6:'Choosing/improving a method',E7:'Commenting on reliability',
-  D1:'Notation, sig. figs & ratio',D2:'Using tables & graphs',D3:'Scientific formulae',D4:'Outliers & uncertainty',ENG:'Scientific English'
+  D:'Data processing — broad tag (no sub-skill specified)',
+  D1:'Notation, sig. figs & ratio',D2:'Using tables & graphs',D3:'Scientific formulae',D4:'Outliers & uncertainty',
+  ENG:'Scientific English'
 };
+function skillName(code){ if(SKILL_NAMES[code]) return SKILL_NAMES[code];
+  const a=ASPECT_BY_KEY[aspectOf(code)]; return a?`${a.name} — ${code}`:String(code); }
 const RANKS=[
-  {min:90,name:'Master',lv:5,raw:'#a855f7'},{min:75,name:'Expert',lv:4,raw:'#22c55e'},
-  {min:60,name:'Adept',lv:3,raw:'#3b82f6'},{min:40,name:'Apprentice',lv:2,raw:'#f59e0b'},{min:0,name:'Novice',lv:1,raw:'#94a3b8'},
+  {min:90,name:'Master',lv:5,raw:'#b47cff'},
+  {min:75,name:'Expert',lv:4,raw:'#2ee6a8'},
+  {min:60,name:'Adept',lv:3,raw:'#3ce0ff'},
+  {min:40,name:'Apprentice',lv:2,raw:'#ffb02e'},
+  {min:0, name:'Novice',lv:1,raw:'#94a3b8'},
 ];
-
-const ASSESSMENT_TYPES=[
-  {key:'monthly_mc',label:'Monthly Online MC Quiz',short:'Monthly MC',icon:'📝',cls:'monthly'},
-  {key:'summative',label:'Summative Assessment',short:'Summative',icon:'🏁',cls:'summative'},
-  {key:'other',label:'Other / Formative Assessment',short:'Other',icon:'🧪',cls:'other'},
+/* assessment weighting presets (percent) */
+const KINDS=[
+  {key:'diagnostic',label:'Diagnostic / pre-test',w:50,icon:'🧪'},
+  {key:'classwork', label:'Classwork / homework', w:75,icon:'📝'},
+  {key:'quiz',      label:'Quiz',                 w:100,icon:'⚡'},
+  {key:'formative', label:'Formative test',       w:100,icon:'🔬'},
+  {key:'practical', label:'Practical / lab report',w:125,icon:'⚗️'},
+  {key:'chapter',   label:'Chapter test',         w:150,icon:'📘'},
+  {key:'summative', label:'Summative / Term exam',w:200,icon:'🏆'},
+  {key:'custom',    label:'Custom weight',        w:100,icon:'🎛'},
 ];
-const DEFAULT_ASSESSMENT_TYPE='monthly_mc';
-const SUMMATIVE_KEEP_TERMS=3;
-
-function allSkillCodes(){ return ASPECTS.flatMap(a=>SUBSKILLS[a.key]); }
+function kindOf(a){ return KINDS.find(k=>k.key===(a&&a.kind))||KINDS.find(k=>k.key==='custom'); }
 function rankFor(pct){ if(pct==null||isNaN(pct)) return {name:'—',lv:0,raw:'#64748b',min:0}; for(const r of RANKS){ if(pct>=r.min) return r; } return RANKS[RANKS.length-1]; }
-function xpInfo(pct){ const r=rankFor(pct); if(r.lv===0) return {p:0,next:null}; const idx=RANKS.findIndex(x=>x.name===r.name);
-  if(r.lv===5) return {p:100,next:null,lower:90,upper:100}; const lower=r.min,upper=RANKS[idx-1].min,span=upper-lower;
-  return {p:Math.max(0,Math.min(100,span>0?(pct-lower)/span*100:100)),next:RANKS[idx-1].name,lower,upper}; }
-
-/* ============================================================ STATE / LOCAL STORAGE ============================================================ */
-let DB=emptyDB(), pending=null, currentSid=null, currentView='roster';
-
-function emptyDB(){ return {students:{},assessments:[],remarks:{},confidence:{}}; }
-
-function normalizeAssessment(a){
-  a=a||{};
-  a.id=a.id||slug(a.name||('assessment-'+Date.now()));
-  a.name=a.name||a.id;
-  a.type=a.type||inferAssessmentType(a.name);
-  if(a.includeInMastery==null) a.includeInMastery=true;
-  a.year=a.year||'';
-  a.form=a.form||'';
-  a.term=a.term||'';
-  a.seq=+a.seq||0;
-  a.skillMax=a.skillMax||{};
-  a.aspectMax=a.aspectMax||{};
-  a.results=a.results||{};
-  a.skillCodes=a.skillCodes||Object.keys(a.skillMax||{});
-  a.fullTotal=+a.fullTotal||Object.values(a.skillMax||{}).reduce((s,v)=>s+(+v||0),0);
-  return a;
+function xpInfo(pct){
+  const r=rankFor(pct); if(r.lv===0) return {p:0,next:null};
+  const idx=RANKS.findIndex(x=>x.name===r.name);
+  if(r.lv===5) return {p:100,next:null,lower:90,upper:100};
+  const lower=r.min,upper=RANKS[idx-1].min,span=upper-lower;
+  return {p:Math.max(0,Math.min(100,span>0?(pct-lower)/span*100:100)),next:RANKS[idx-1].name,lower,upper};
 }
 
-function normalizeConfidenceEntry(e){
-  e=e||{};
-  e.id=e.id||('conf_'+Date.now()+'_'+Math.random().toString(36).slice(2,7));
-  e.title=e.title||'Pre-class confidence check';
-  e.date=e.date||'';
-  e.year=e.year||'';
-  e.form=e.form||'';
-  e.term=e.term||'';
-  e.seq=+e.seq||0;
-  e.createdAt=e.createdAt||Date.now();
-  e.skills=e.skills||{};
-  return e;
-}
+/* ============================================================
+   2 · STATE
+============================================================ */
+let DB=emptyDB(),pending=null,currentSid=null,currentView='roster';
+function emptyDB(){ return {students:{},assessments:[],remarks:{},tagMap:{}}; }
 
-function normalizeDB(d){
-  const x=d||emptyDB();
-  x.students=x.students||{};
-  x.assessments=(x.assessments||[]).map(normalizeAssessment);
-  x.remarks=x.remarks||{};
-  x.confidence=x.confidence||{};
-  Object.keys(x.confidence).forEach(sid=>{
-    if(!Array.isArray(x.confidence[sid])) x.confidence[sid]=[];
-    x.confidence[sid]=x.confidence[sid].map(normalizeConfidenceEntry);
-  });
-  return x;
-}
-
-function loadDB(){ try{ const s=localStorage.getItem('sq_db'); if(!s) return null; const d=normalizeDB(JSON.parse(s)); if(d&&d.assessments) return d; }catch(e){} return null; }
-function saveDB(){ try{ localStorage.setItem('sq_db',JSON.stringify(DB)); }catch(e){} }
-
-/* ============================================================ HELPERS ============================================================ */
+/* ============================================================
+   3 · HELPERS
+============================================================ */
 function esc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function num(v){ if(v==null||v==='') return NaN; if(typeof v==='number') return v; const n=parseFloat(String(v).replace(/[^0-9.\-]/g,'')); return isNaN(n)?NaN:n; }
 function mean(a){ return a.length? a.reduce((s,v)=>s+v,0)/a.length : null; }
 function fmt(p){ return (p==null||isNaN(p))?'—':Math.round(p)+'%'; }
-function deepCopy(x){ return JSON.parse(JSON.stringify(x)); }
-function hashStr(s){ let h=0; for(const c of String(s)) h=(h*31+c.charCodeAt(0))|0; return h; }
-function slug(s){ let x=String(s||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); return x||('a'+Math.abs(hashStr(String(s))).toString(36)); }
-function aspectOf(code){ if(!code) return null; const s=code.toUpperCase(); if(s.startsWith('ENG')) return 'ENG'; const c=s[0]; return (c==='R'||c==='E'||c==='D')?c:'ENG'; }
-function normCode(v){ if(v==null) return null; let s=String(v).trim().toUpperCase().replace(/\s+/g,''); if(!s) return null;
-  if(s.startsWith('ENG')||s.startsWith('ENGLISH')) return 'ENG'; if(/^R\d+$/.test(s)||/^E\d+$/.test(s)||/^D\d+$/.test(s)) return s; return null; }
+function n1(v){ if(v==null||isNaN(v)) return '—'; const r=Math.round(v*10)/10; return Number.isInteger(r)?String(r):r.toFixed(1); }
+function pct1(v){ const r=Math.round(v*1000)/10; return Number.isInteger(r)?String(r):r.toFixed(1); }
+
+/* which of the four aspects does a code belong to? */
+function aspectOf(code){ if(!code||code===IGNORE) return null;
+  const s=String(code).toUpperCase(); if(s.startsWith('ENG')) return 'ENG';
+  const c=s[0]; return (c==='R'||c==='E'||c==='D')?c:'ENG'; }
+
+/* ── tag normalisation ─────────────────────────────────────── */
+const WORD_CODES=[
+  [/^(R|RSN|REASON|REASONING|SCIENTIFICREASON(ING)?|REASONINGSKILL)$/,'R'],
+  [/^(E|EXP|EXPT|EXPERIMENT|EXPERIMENTING|EXPERIMENTAL|PRACTICAL|INVESTIGATION)$/,'E'],
+  [/^(D|DP|DATA|DATAPROCESS(ING)?|PROCESSING|DATAHANDLING|DATAANALYSIS)$/,'D'],
+  [/^(ENG|ENGLISH|SCIENTIFICENGLISH|LANG|LANGUAGE|SCIENCEENGLISH)$/,'ENG'],
+];
+function tagKey(raw){ return String(raw??'').trim().toUpperCase().replace(/[\s._\-–—/\\()]+/g,''); }
+function normCode(v){
+  if(v==null) return null;
+  const s=tagKey(v); if(!s) return null;
+  if(/^ENG\d*$/.test(s)) return 'ENG';
+  for(const [re,c] of WORD_CODES){ if(re.test(s)) return c; }
+  const m=s.match(/^([RED])(\d{1,2})$/); if(m) return m[1]+String(parseInt(m[2],10));
+  return null;
+}
+/* resolve a raw tag: direct code ▸ teacher's manual map ▸ null (unassigned) */
+function resolveTag(raw){
+  const d=normCode(raw); if(d) return d;
+  const k=tagKey(raw); if(!k) return null;
+  const m=(DB.tagMap||{})[k]; return m||null;
+}
+function isManual(raw){ const k=tagKey(raw); return !normCode(raw)&&!!(DB.tagMap||{})[k]; }
+function isBroad(code){ return BROAD_CODES.has(code); }
+function suggestCode(raw){
+  const s=tagKey(raw); if(!s) return '';
+  if(/ENG|LANG|WRIT|VOCAB|TERM|SPELL/.test(s)) return 'ENG';
+  if(/REASON|LOGIC|INFER|DEDUC|INDUC|EXPLAIN|PREDICT/.test(s)) return 'R';
+  if(/EXP|PRAC|LAB|INVEST|APPARAT|METHOD|HYPOTH|VARIA/.test(s)) return 'E';
+  if(/DATA|GRAPH|TABLE|CALC|NUMB|UNIT|FIGUR|PLOT|AVERAG/.test(s)) return 'D';
+  const c=s[0]; if(c==='R'||c==='E'||c==='D') return c;
+  return '';
+}
+function codesForAspect(key,present){
+  const known=SUBSKILLS[key]||[];
+  const out=known.filter(c=>present.has(c));
+  const extra=[...present].filter(c=>aspectOf(c)===key&&!known.includes(c)).sort();
+  return out.concat(extra);
+}
 function cohortOf(sid){ const m=String(sid).match(/(\d{4})/); return m?m[1]:null; }
 function cohortLabel(sid){ const y=cohortOf(sid); if(!y) return ''; const yy=(+y%100); const nx=String((yy+1)%100).padStart(2,'0'); return `'${String(yy).padStart(2,'0')}/${nx} intake`; }
 function deltaHTML(d){ if(d==null) return '<span class="delta flat">—</span>'; const r=Math.round(d);
   if(r>0) return `<span class="delta up">▲ +${r}%</span>`; if(r<0) return `<span class="delta down">▼ ${r}%</span>`; return '<span class="delta flat">► 0%</span>'; }
-function confDeltaHTML(d){ if(d==null) return '<span class="delta flat">—</span>'; const r=Math.round(d*10)/10;
-  if(r>0) return `<span class="delta up">▲ +${r}</span>`; if(r<0) return `<span class="delta down">▼ ${r}</span>`; return '<span class="delta flat">► 0</span>'; }
-function confFmt(v){ if(v==null||isNaN(v)) return '—'; const r=Math.round(v*10)/10; return r+'/5'; }
 function rankBadge(pct){ const r=rankFor(pct); return `<span class="rankbadge" style="background:${r.raw}">Lv.${r.lv} ${r.name}</span>`; }
+
+/* ============================================================
+   4 · WEIGHTING + RECOMPUTE ENGINE
+   item-level marks are stored, so tag mapping and weighting can
+   always be re-applied retroactively without a re-upload.
+============================================================ */
+function aWeight(a){ const w=a&&a.weight; return (w==null||isNaN(w))?1:Math.max(0,w); }
+function awOf(a,key){ const w=a&&a.aspectWeights?a.aspectWeights[key]:1; return (w==null||isNaN(w))?1:Math.max(0,w); }
+function hasAspectWeighting(a){ return ASPECTS.some(x=>Math.abs(awOf(a,x.key)-1)>1e-9); }
+function weightChips(a){
+  const out=[];
+  const k=kindOf(a),w=aWeight(a);
+  if(Math.abs(w-1)>1e-9||a.kind) out.push(`<span class="wchip">×${n1(w)} ${esc(k.label.split(' /')[0].toUpperCase())}</span>`);
+  ASPECTS.forEach(x=>{ const v=awOf(a,x.key); if(Math.abs(v-1)>1e-9)
+    out.push(`<span class="wchip" style="border-color:${x.raw}66;background:${x.raw}18;color:${x.raw}">⚖ ${x.key} ${Math.round(v*100)}%</span>`); });
+  return out.join(' ');
+}
+/* legacy → item model */
+function upgradeAssessment(a){
+  if(a.items&&a.scores) return;
+  const items=[],scores={};
+  Object.entries(a.skillMax||{}).forEach(([code,mx],k)=>items.push({id:'lg'+k,label:code,rawTag:code,full:mx}));
+  Object.entries(a.results||{}).forEach(([sid,r])=>{ const o={};
+    items.forEach(it=>{ o[it.id]=(r.skillEarned||{})[it.rawTag]||0; }); scores[sid]=o; });
+  a.items=items; a.scores=scores;
+}
+function recomputeAssessment(a){
+  if(!a.items) upgradeAssessment(a);
+  if(a.weight==null) a.weight=1;
+  if(!a.kind) a.kind='formative';
+  if(!a.aspectWeights) a.aspectWeights={R:1,E:1,D:1,ENG:1};
+  ASPECTS.forEach(x=>{ if(a.aspectWeights[x.key]==null) a.aspectWeights[x.key]=1; });
+
+  a.skillMax={}; a.aspectMax={}; a.rawFull=0; a.fullTotal=0;
+  a.unmapped=[]; a.unmappedMarks=0; a.manualCount=0;
+  (a.items||[]).forEach(it=>{
+    const code=resolveTag(it.rawTag);
+    it._code=code;
+    if(code===IGNORE) return;
+    if(!code){ a.unmapped.push({raw:it.rawTag,label:it.label,full:it.full}); a.unmappedMarks+=it.full; a.rawFull+=it.full; return; }
+    if(isManual(it.rawTag)) a.manualCount++;
+    const asp=aspectOf(code),w=awOf(a,asp);
+    a.skillMax[code]=(a.skillMax[code]||0)+it.full*w;
+    a.aspectMax[asp]=(a.aspectMax[asp]||0)+it.full*w;
+    a.rawFull+=it.full; a.fullTotal+=it.full*w;
+  });
+  a.skillCodes=Object.keys(a.skillMax);
+  a.results={};
+  Object.entries(a.scores||{}).forEach(([sid,sc])=>{
+    const skillEarned={},aspectEarned={}; let total=0,rawTotal=0;
+    (a.items||[]).forEach(it=>{
+      const code=it._code; let m=num(sc[it.id]); if(isNaN(m)) m=0; m=Math.max(0,Math.min(it.full,m));
+      if(code===IGNORE) return;
+      rawTotal+=m; if(!code) return;
+      const asp=aspectOf(code),w=awOf(a,asp);
+      skillEarned[code]=(skillEarned[code]||0)+m*w;
+      aspectEarned[asp]=(aspectEarned[asp]||0)+m*w;
+      total+=m*w;
+    });
+    const st=DB.students[sid]||{};
+    a.results[sid]={sid,name:st.name||'',classNo:st.classNo||'',skillEarned,aspectEarned,total,rawTotal};
+  });
+}
+function recomputeAll(){ (DB.assessments||[]).forEach(a=>{ upgradeAssessment(a); recomputeAssessment(a); }); }
+
+/* ── ordering / selection ─────────────────────────────────── */
 function formRank(f){ const m={S1:1,S2:2,S3:3,F1:1,F2:2,F3:3}; return m[String(f||'').toUpperCase()]||9; }
 function termRank(t){ const m=String(t||'').match(/\d+/); return m?parseInt(m[0]):0; }
-function yearRank(y){ const m=String(y||'').match(/(\d{4})/); return m?parseInt(m[1]):0; }
-function sortKey(a){ return yearRank(a.year)*1e9 + formRank(a.form)*1e6 + termRank(a.term)*1e3 + (+a.seq||0); }
-function sortedAllAssessments(){ return DB.assessments.slice().sort((x,y)=>sortKey(x)-sortKey(y)); }
-function todayISO(){ const d=new Date(); return d.toISOString().slice(0,10); }
-
-function inferAssessmentType(name){
-  const s=String(name||'').toLowerCase();
-  if(s.includes('mc')||s.includes('quiz')||s.includes('online')||s.includes('monthly')) return 'monthly_mc';
-  if(s.includes('summative')||s.includes('exam')||s.includes('assessment')||s.includes('term test')||s.includes('test')) return 'summative';
-  return DEFAULT_ASSESSMENT_TYPE;
-}
-function assessTypeDef(key){ return ASSESSMENT_TYPES.find(x=>x.key===key)||ASSESSMENT_TYPES[0]; }
-function typeOptionsHTML(selected){ return ASSESSMENT_TYPES.map(t=>`<option value="${t.key}" ${selected===t.key?'selected':''}>${t.icon} ${t.label}</option>`).join(''); }
-function assessmentTypePill(a){ const t=assessTypeDef(a.type); return `<span class="typepill ${t.cls}">${t.icon} ${esc(t.short)}</span>`; }
-function assessmentTermKey(a){ return [a.year||'',a.form||'',a.term||''].join('|') || 'untagged'; }
-function assessmentTermLabel(a){ return [a.year,a.form,a.term].filter(Boolean).join(' · ') || 'Untagged term'; }
-
-function summativeTermInfos(){
-  const map=new Map();
-  DB.assessments.filter(a=>a.type==='summative'&&a.includeInMastery!==false).forEach(a=>{
-    const k=assessmentTermKey(a), order=sortKey(a);
-    if(!map.has(k)||order>map.get(k).order) map.set(k,{key:k,order,label:assessmentTermLabel(a)});
-  });
-  return [...map.values()].sort((a,b)=>b.order-a.order);
-}
-function latestSummativeTermKeys(){
-  return new Set(summativeTermInfos().slice(0,SUMMATIVE_KEEP_TERMS).map(x=>x.key));
-}
-function isAssessmentIncludedInAnalysis(a,keepSet){
-  if(!a||a.includeInMastery===false) return false;
-  if(a.type==='summative'){
-    const keep=keepSet||latestSummativeTermKeys();
-    return keep.has(assessmentTermKey(a));
-  }
-  return true;
-}
-function assessmentScopePill(a){
-  if(a.includeInMastery===false) return '<span class="scopepill manual">Manual excluded</span>';
-  if(a.type==='summative'&&!isAssessmentIncludedInAnalysis(a)) return '<span class="scopepill excluded">Older summative term</span>';
-  return '<span class="scopepill included">Used in analysis</span>';
-}
-function analysisAssessments(){ const keep=latestSummativeTermKeys(); return DB.assessments.filter(a=>isAssessmentIncludedInAnalysis(a,keep)); }
-function sortedAssessments(){ return analysisAssessments().slice().sort((x,y)=>sortKey(x)-sortKey(y)); }
+function sortKey(a){ return formRank(a.form)*1e6+termRank(a.term)*1e3+(a.seq||0); }
+function sortedAssessments(){ return DB.assessments.slice().sort((x,y)=>sortKey(x)-sortKey(y)); }
 function studentAssessments(sid){ return sortedAssessments().filter(a=>a.results&&a.results[sid]); }
-function studentAllAssessments(sid){ return sortedAllAssessments().filter(a=>a.results&&a.results[sid]); }
-function analysisScopeSummary(){
-  const keep=latestSummativeTermKeys();
-  const included=DB.assessments.filter(a=>isAssessmentIncludedInAnalysis(a,keep));
-  const terms=summativeTermInfos();
-  return {
-    totalStored:DB.assessments.length,
-    included:included.length,
-    monthly:included.filter(a=>a.type==='monthly_mc').length,
-    summativeIncluded:included.filter(a=>a.type==='summative').length,
-    summativeTermsTotal:terms.length,
-    summativeTermsKept:Math.min(SUMMATIVE_KEEP_TERMS,terms.length)
-  };
-}
 
-/* Mastery */
-function cumulative(sid,key,level){ let e=0,p=0; studentAssessments(sid).forEach(a=>{
-  const max=level==='aspect'?a.aspectMax[key]:a.skillMax[key];
-  const earned=level==='aspect'?a.results[sid].aspectEarned[key]:a.results[sid].skillEarned[key];
-  if(max>0 && earned!=null){ e+=earned; p+=max; } }); return p>0? e/p*100 : null; }
+/* ── mastery maths (weight-aware) ─────────────────────────── */
+function cumulative(sid,key,level){ let e=0,p=0;
+  studentAssessments(sid).forEach(a=>{ const w=aWeight(a);
+    const max=level==='aspect'?a.aspectMax[key]:a.skillMax[key];
+    const earned=level==='aspect'?a.results[sid].aspectEarned[key]:a.results[sid].skillEarned[key];
+    if(max>0&&earned!=null){ e+=earned*w; p+=max*w; } });
+  return p>0? e/p*100 : null; }
 function seriesForKey(sid,key,level){ return studentAssessments(sid).map(a=>{
   const max=level==='aspect'?a.aspectMax[key]:a.skillMax[key];
   const earned=level==='aspect'?a.results[sid].aspectEarned[key]:a.results[sid].skillEarned[key];
   const pct=(max>0&&earned!=null)?earned/max*100:null; return {a,pct}; }); }
 function deltas(series){ const v=series.filter(s=>s.pct!=null); if(!v.length) return {current:null,vsPrev:null,vsFirst:null,n:0};
-  const cur=v[v.length-1].pct, first=v[0].pct, prev=v.length>=2?v[v.length-2].pct:null;
+  const cur=v[v.length-1].pct,first=v[0].pct,prev=v.length>=2?v[v.length-2].pct:null;
   return {current:cur,vsPrev:prev==null?null:cur-prev,vsFirst:v.length>=2?cur-first:null,n:v.length}; }
 function levelChange(series){ const v=series.filter(s=>s.pct!=null); if(v.length<2) return null;
-  const a=rankFor(v[v.length-2].pct), b=rankFor(v[v.length-1].pct);
+  const a=rankFor(v[v.length-2].pct),b=rankFor(v[v.length-1].pct);
   if(b.lv>a.lv) return {dir:'up',from:a,to:b}; if(b.lv<a.lv) return {dir:'down',from:a,to:b}; return null; }
 function overallSeries(sid){ return studentAssessments(sid).map(a=>({a,pct:a.fullTotal>0?a.results[sid].total/a.fullTotal*100:null})); }
-function overallAvg(sid){ return mean(overallSeries(sid).map(s=>s.pct).filter(p=>p!=null)); }
+function overallAvg(sid){ let n=0,d=0; overallSeries(sid).forEach(s=>{ if(s.pct==null) return; const w=aWeight(s.a); n+=s.pct*w; d+=w; }); return d>0?n/d:null; }
 function overallTrend(sid){ const s=overallSeries(sid).filter(x=>x.pct!=null); if(s.length<2) return {label:'baseline',delta:null};
   const d=s[s.length-1].pct-s[0].pct; return {label:d>3?'improving':d<-3?'declining':'steady',delta:d}; }
 function presentSkillCodes(sid){ const set=new Set(); studentAssessments(sid).forEach(a=>Object.keys(a.skillMax).forEach(c=>{ if(a.skillMax[c]>0) set.add(c); })); return set; }
 function skillStats(sid,code){ const series=seriesForKey(sid,code,'skill'); return {code,series,...deltas(series),cum:cumulative(sid,code,'skill')}; }
+function tagMix(sid,key){ let broad=0,det=0; studentAssessments(sid).forEach(a=>{
+  Object.entries(a.skillMax).forEach(([c,mx])=>{ if(aspectOf(c)!==key||!(mx>0)) return; if(isBroad(c)&&c===key) broad+=mx; else det+=mx; }); });
+  return {broad:Math.round(broad*10)/10,det:Math.round(det*10)/10}; }
 function mostImproved(sid){ let best=null; presentSkillCodes(sid).forEach(c=>{ const s=skillStats(sid,c); if(s.vsFirst!=null&&s.vsFirst>0){ if(!best||s.vsFirst>best.vsFirst) best=s; } }); return best; }
 function needsAttention(sid){ let decl=null,low=null; presentSkillCodes(sid).forEach(c=>{ const s=skillStats(sid,c);
-  if(s.vsPrev!=null&&s.vsPrev<0){ if(!decl||s.vsPrev<decl.vsPrev) decl=s; } if(s.cum!=null){ if(!low||s.cum<low.cum) low=s; } });
+  if(s.vsPrev!=null&&s.vsPrev<0){ if(!decl||s.vsPrev<decl.vsPrev) decl=s; }
+  if(s.cum!=null){ if(!low||s.cum<low.cum) low=s; } });
   return decl?{...decl,reason:'decline'}:(low?{...low,reason:'low'}:null); }
 function biggestDecline(sid){ let w=null; presentSkillCodes(sid).forEach(c=>{ const s=skillStats(sid,c); if(s.vsPrev!=null&&s.vsPrev<0){ if(!w||s.vsPrev<w.vsPrev) w=s; } }); return w; }
 function classAspectAverages(){ const r={}; ASPECTS.forEach(a=>{ const v=Object.keys(DB.students).map(sid=>cumulative(sid,a.key,'aspect')).filter(x=>x!=null); r[a.key]=v.length?mean(v):null; }); return r; }
-
-/* Confidence */
-function confidenceSortKey(e){
-  const d=Date.parse(e.date||'');
-  if(!isNaN(d)) return d;
-  return yearRank(e.year)*1e9 + formRank(e.form)*1e6 + termRank(e.term)*1e3 + (+e.seq||0) + ((+e.createdAt||0)/1e12);
-}
-function confidenceEntries(sid){ const arr=((DB.confidence||{})[sid]||[]).map(normalizeConfidenceEntry); return arr.slice().sort((a,b)=>confidenceSortKey(a)-confidenceSortKey(b)); }
-function confidenceSeriesForKey(sid,key,level){
-  return confidenceEntries(sid).map(e=>{
-    let val=null;
-    if(level==='skill'){
-      const v=num(e.skills&&e.skills[key]);
-      if(!isNaN(v)) val=Math.max(1,Math.min(5,v));
-    }else{
-      const vals=(SUBSKILLS[key]||[]).map(c=>num(e.skills&&e.skills[c])).filter(v=>!isNaN(v));
-      val=mean(vals);
-    }
-    return {e,val,pct:val==null?null:val/5*100};
-  });
-}
-function confidenceDeltas(series){
-  const v=series.filter(s=>s.val!=null);
-  if(!v.length) return {current:null,vsPrev:null,vsFirst:null,n:0};
-  const cur=v[v.length-1].val, first=v[0].val, prev=v.length>=2?v[v.length-2].val:null;
-  return {current:cur,vsPrev:prev==null?null:cur-prev,vsFirst:v.length>=2?cur-first:null,n:v.length};
-}
-function confidenceCount(sid){ return confidenceEntries(sid).length; }
 function achievements(sid){ const out=[]; const av=ASPECTS.map(a=>cumulative(sid,a.key,'aspect'));
   if(av.some(p=>p!=null&&p>=90)) out.push({ic:'👑',l:'Master Rank reached'});
   if(av.every(p=>p!=null&&p>=60)) out.push({ic:'🌟',l:'All-Rounder (all ≥ Adept)'});
   const mi=mostImproved(sid); if(mi&&mi.vsFirst>=15) out.push({ic:'🚀',l:`Rising Star (+${Math.round(mi.vsFirst)}%)`});
-  const n=studentAssessments(sid).length; if(n>=3) out.push({ic:'🎖️',l:`${n} analysis quests cleared`});
-  if(confidenceCount(sid)>=2) out.push({ic:'💬',l:`${confidenceCount(sid)} confidence checks recorded`});
+  const n=studentAssessments(sid).length; if(n>=3) out.push({ic:'🎖️',l:`${n} quests cleared`});
   return out; }
-function avatarColor(name){ const cols=['#7c9cff','#10b981','#f59e0b','#fb7185','#a855f7','#38bdf8','#f472b6','#34d399']; let h=0; for(const c of String(name||'?')) h=(h*31+c.charCodeAt(0))%cols.length; return cols[h]; }
+function avatarColor(name){ const cols=['#3ce0ff','#19e5b6','#ffb02e','#ff6b93','#b47cff','#7c9cff','#f472b6','#34d399']; let h=0; for(const c of String(name||'?')) h=(h*31+c.charCodeAt(0))%cols.length; return cols[h]; }
 
-/* ============================================================ PARSING ============================================================ */
-function findRow(rows,test){ for(let i=0;i<rows.length;i++){ const r=rows[i]||[]; for(let j=0;j<Math.min(r.length,6);j++){ const c=r[j];
+/* unresolved tags across the whole database */
+function unmappedIndex(){
+  const m={};
+  (DB.assessments||[]).forEach(a=>(a.items||[]).forEach(it=>{
+    const code=resolveTag(it.rawTag); if(code) return;
+    const k=tagKey(it.rawTag); if(!k) return;
+    if(!m[k]) m[k]={key:k,raw:it.rawTag,marks:0,items:0,sheets:new Set()};
+    m[k].marks+=it.full; m[k].items++; m[k].sheets.add(a.name);
+  }));
+  return Object.values(m).sort((x,y)=>y.marks-x.marks);
+}
+function unmappedTotals(){ const idx=unmappedIndex(); return {tags:idx.length,marks:idx.reduce((s,x)=>s+x.marks,0),idx}; }
+
+/* ============================================================
+   5 · PARSING (items + unresolved capture)
+============================================================ */
+function findRow(rows,test){ for(let i=0;i<rows.length;i++){ const r=rows[i]||[]; for(let j=0;j<Math.min(r.length,8);j++){ const c=r[j];
   if(c!=null){ const s=String(c).trim().toLowerCase().replace(/[:：]$/,''); if(s&&test(s)) return i; } } } return -1; }
 function findCol(header,test){ for(let j=0;j<header.length;j++){ const c=header[j]; if(c!=null){ const s=String(c).trim().toLowerCase(); if(test(s)) return j; } } return -1; }
-function parseSheet(name,rows,warnings){
+function sheetTitle(name,rows,headerRow){
+  const raw=String(name||'').trim();
+  if(!/^(sheet\s*\d*|工作表\s*\d*|表\s*\d*|table\s*\d*)$/i.test(raw)) return raw;
+  const limit=headerRow>0?Math.min(headerRow,4):0;
+  for(let i=0;i<limit;i++){ const r=rows[i]||[]; for(const c of r){ if(c!=null&&String(c).trim()) return String(c).trim(); } }
+  return raw;
+}
+function parseSheet(name,rows,warnings,notes){
   const headerRow=findRow(rows,s=>s==='sid'||s==='s.i.d'||s==='student id'||s.startsWith('sid'));
-  const typeRow=findRow(rows,s=>s==='type'||s==='skill'||s==='skill type'||s.startsWith('type'));
-  const fullRow=findRow(rows,s=>s.startsWith('full'));
+  const typeRow=findRow(rows,s=>s==='type'||s==='types'||s==='skill'||s==='skills'||s==='aspect'||s==='aspects'
+    ||s==='code'||s==='codes'||s==='skill type'||s==='skill code'||s.startsWith('type'));
+  const fullRow=findRow(rows,s=>s.startsWith('full')||s==='max'||s.startsWith('max mark')||s.startsWith('total marks'));
   const avgRow=findRow(rows,s=>s.startsWith('average')||s.startsWith('avg')||s.startsWith('mean'));
   if(headerRow<0){ warnings.push(`“${name}”: no header row containing “SID” — sheet skipped.`); return null; }
-  if(typeRow<0){ warnings.push(`“${name}”: missing a “type” / “skill” row for question-skill mapping — sheet skipped.`); return null; }
-  if(fullRow<0){ warnings.push(`“${name}”: missing a “Full” (max marks) row — sheet skipped.`); return null; }
-  const header=rows[headerRow]||[], tRow=rows[typeRow]||[], fRow=rows[fullRow]||[];
+  if(typeRow<0){ warnings.push(`“${name}”: missing a “type” (skill tag) row — sheet skipped.`); return null; }
+
+  const header=rows[headerRow]||[],tRow=rows[typeRow]||[],fRow=fullRow>=0?(rows[fullRow]||[]):[];
+  const title=sheetTitle(name,rows,headerRow);
   const idxSID=findCol(header,s=>s==='sid'||s.startsWith('sid')||s==='student id');
-  const idxName=findCol(header,s=>s==='name');
+  const idxName=findCol(header,s=>s==='name'||s==='student name'||s.startsWith('name'));
   const idxClass=findCol(header,s=>s.includes('class'));
   const idxTotal=findCol(header,s=>s==='total'||s.startsWith('total'));
   if(idxSID<0){ warnings.push(`“${name}”: could not locate the SID column — sheet skipped.`); return null; }
+
   const skip=new Set([idxSID,idxName,idxClass,idxTotal].filter(x=>x>=0));
   const maxLen=Math.max(header.length,tRow.length,fRow.length);
-  const qcols=[];
-  for(let j=0;j<maxLen;j++){ if(skip.has(j)) continue; const code=normCode(tRow[j]); const full=num(fRow[j]);
-    if(code && full>0) qcols.push({j,code,aspect:aspectOf(code),full}); }
-  if(!qcols.length){ warnings.push(`“${name}”: no valid skill-tagged question columns found — sheet skipped.`); return null; }
-  const skillMax={},aspectMax={}; qcols.forEach(q=>{ skillMax[q.code]=(skillMax[q.code]||0)+q.full; aspectMax[q.aspect]=(aspectMax[q.aspect]||0)+q.full; });
-  const fullTotal=qcols.reduce((s,q)=>s+q.full,0);
+  const items=[]; let inferred=0,unknownTags=0;
+  for(let j=0;j<maxLen;j++){
+    if(skip.has(j)) continue;
+    const rawTag=tRow[j]; if(rawTag==null||String(rawTag).trim()==='') continue;
+    let full=num(fRow[j]);
+    if(!(full>0)){ if(fullRow<0){ full=1; inferred++; } else continue; }
+    const label=(header[j]!=null&&String(header[j]).trim())?String(header[j]).trim():('Col '+(j+1));
+    if(!normCode(rawTag)&&!(DB.tagMap||{})[tagKey(rawTag)]) unknownTags++;
+    items.push({id:'i'+j,col:j,label,rawTag:String(rawTag).trim(),full});
+  }
+  if(!items.length){ warnings.push(`“${name}”: no tagged question columns found in the “type” row — sheet skipped.`); return null; }
+  if(inferred) notes.push(`“${title}”: no “Full” row found — assumed 1 mark for each of the ${inferred} tagged question(s).`);
+
   const labelRows=new Set([headerRow,typeRow,fullRow,avgRow].filter(x=>x>=0));
-  const results={},roster=[];
-  for(let i=headerRow+1;i<rows.length;i++){ if(labelRows.has(i)) continue; const row=rows[i]||[];
+  const scores={},roster=[];
+  for(let i=headerRow+1;i<rows.length;i++){
+    if(labelRows.has(i)) continue; const row=rows[i]||[];
     const sid=String(row[idxSID]??'').trim();
-    if(!sid||!/\d/.test(sid)||/^(full|type|average|avg|mean)$/i.test(sid)) continue;
+    if(!sid||!/\d/.test(sid)||/^(full|type|average|avg|mean|total)$/i.test(sid)) continue;
     const sName=idxName>=0?String(row[idxName]??'').trim():'';
     const classNo=idxClass>=0?String(row[idxClass]??'').trim():'';
-    const skillEarned={},aspectEarned={}; let total=0;
-    qcols.forEach(q=>{ let m=num(row[q.j]); if(isNaN(m)) m=0; skillEarned[q.code]=(skillEarned[q.code]||0)+m; aspectEarned[q.aspect]=(aspectEarned[q.aspect]||0)+m; total+=m; });
-    results[sid]={sid,name:sName,classNo,skillEarned,aspectEarned,total}; roster.push({sid,name:sName,classNo}); }
+    const o={}; items.forEach(it=>{ let m=num(row[it.col]); if(isNaN(m)) m=0; o[it.id]=Math.max(0,Math.min(it.full,m)); });
+    scores[sid]=o; roster.push({sid,name:sName,classNo});
+  }
   if(!roster.length){ warnings.push(`“${name}”: header found but no student rows detected — sheet skipped.`); return null; }
-  return {name:name.trim(),skillMax,aspectMax,fullTotal,results,roster,skillCodes:Object.keys(skillMax),type:inferAssessmentType(name)};
+  return {name:title,items,scores,roster,unknownTags,
+    rawFull:items.reduce((s,i)=>s+i.full,0),
+    broadMarks:items.filter(i=>{const c=resolveTag(i.rawTag);return c&&c!==IGNORE&&isBroad(c);}).reduce((s,i)=>s+i.full,0)};
 }
-function parseWorkbook(buf){ const wb=XLSX.read(new Uint8Array(buf),{type:'array'}); const assessments=[],warnings=[];
+function parseWorkbook(buf){
+  const wb=XLSX.read(new Uint8Array(buf),{type:'array'});
+  const parsed=[],warnings=[],notes=[];
   wb.SheetNames.forEach(nm=>{ const rows=XLSX.utils.sheet_to_json(wb.Sheets[nm],{header:1,raw:true,defval:null});
-    const p=parseSheet(nm,rows,warnings); if(p) assessments.push(p); }); return {assessments,warnings}; }
+    const p=parseSheet(nm,rows,warnings,notes); if(p) parsed.push(p); });
+  return {parsed,warnings,notes};
+}
 
-/* ============================================================ MERGE ============================================================ */
+/* ============================================================
+   6 · MERGE
+============================================================ */
 function purgeDemo(){ if(!DB.assessments.some(a=>a.demo)) return; DB.assessments=DB.assessments.filter(a=>!a.demo);
-  const used=new Set(); DB.assessments.forEach(a=>Object.keys(a.results).forEach(s=>used.add(s)));
+  const used=new Set(); DB.assessments.forEach(a=>Object.keys(a.scores||{}).forEach(s=>used.add(s)));
   Object.keys(DB.students).forEach(s=>{ if(!used.has(s)) delete DB.students[s]; }); }
-function mergeAssessment(p,opts={}){
+function mergeAssessment(p,cfg){
   p.roster.forEach(s=>{ const ex=DB.students[s.sid]||{}; DB.students[s.sid]={sid:s.sid,name:s.name||ex.name||'',classNo:s.classNo||ex.classNo||''}; });
-  const id=slug(p.name);
-  const i=DB.assessments.findIndex(a=>a.id===id||a.name.toLowerCase()===p.name.toLowerCase());
-  const selectedType=opts.assessmentType||p.type||inferAssessmentType(p.name);
-  if(i>=0){ const ex=DB.assessments[i]; DB.assessments[i]=normalizeAssessment({...ex,id,name:p.name,type:selectedType,
-      skillMax:p.skillMax,aspectMax:p.aspectMax,fullTotal:p.fullTotal,results:p.results,skillCodes:p.skillCodes,demo:false,
-      updatedAt:Date.now()});
-    return {status:'updated',name:p.name,students:p.roster.length,id}; }
+  const name=((cfg&&cfg.name)||p.name||'').trim()||p.name;
+  const weight=Math.max(0,(cfg?+cfg.weight:100)/100)||0;
+  const aspectWeights={}; ASPECTS.forEach(a=>aspectWeights[a.key]=Math.max(0,(cfg&&cfg.aw?+cfg.aw[a.key]:100)/100));
+  const i=DB.assessments.findIndex(a=>a.name.toLowerCase()===name.toLowerCase());
+  if(i>=0){ const ex=DB.assessments[i];
+    DB.assessments[i]={...ex,name,items:p.items,scores:p.scores,kind:(cfg&&cfg.kind)||ex.kind,weight,aspectWeights,demo:false};
+    recomputeAssessment(DB.assessments[i]);
+    return {status:'updated',name}; }
   const seq=DB.assessments.length?Math.max(...DB.assessments.map(a=>a.seq||0))+1:1;
-  DB.assessments.push(normalizeAssessment({id,name:p.name,year:'',form:'S1',term:'Term 1',seq,createdAt:Date.now(),
-    type:selectedType,includeInMastery:true,skillMax:p.skillMax,aspectMax:p.aspectMax,fullTotal:p.fullTotal,results:p.results,skillCodes:p.skillCodes,demo:false}));
-  return {status:'new',name:p.name,students:p.roster.length,id};
+  const a={id:'a'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),name,
+    year:'2026/27',form:'S1',term:'Term 1',seq,createdAt:Date.now(),
+    kind:(cfg&&cfg.kind)||'formative',weight,aspectWeights,items:p.items,scores:p.scores,demo:false};
+  recomputeAssessment(a); DB.assessments.push(a);
+  return {status:'new',name};
 }
 
-/* ============================================================ CLOUD (Firebase Firestore) ============================================================ */
-const CLOUD={cfg:null,app:null,db:null,auth:null,user:null,status:'off',ready:false,unsub:[],cache:{students:{},assessments:{},remarks:{},confidence:{}},_lastSig:null};
-function loadCloudCfg(){ try{ return JSON.parse(localStorage.getItem('sq_cloudcfg')||'null'); }catch(e){ return null; } }
-function saveCloudCfg(cfg){ try{ localStorage.setItem('sq_cloudcfg',JSON.stringify(cfg)); }catch(e){} }
-function clearCloudCfg(){ try{ localStorage.removeItem('sq_cloudcfg'); }catch(e){} }
-function setCloudStatus(s,msg){ CLOUD.status=s; CLOUD._msg=msg||''; renderCloudPill(); if(!document.getElementById('cloudModal').hidden) renderCloudSettings(); }
-function friendlyErr(e){ const c=(e&&e.code)||''; if(c.includes('permission-denied')) return 'Permission denied — check your Firestore security rules (or sign in).';
-  if(c.includes('unavailable')||c.includes('failed')) return 'Network blocked/offline (this preview sandbox blocks Firebase — run the file locally).';
-  if(c.includes('invalid-api-key')||c.includes('api-key')) return 'Invalid API key in config.'; return (e&&e.message)||'Unknown error'; }
-function parseCfgText(text){ let t=String(text||'').trim(); if(!t) return null;
-  t=t.replace(/^\s*(?:const|let|var)\s+\w+\s*=\s*/,'').replace(/;\s*$/,'').trim();
-  try{ return JSON.parse(t); }catch(e){} try{ const o=Function('"use strict";return ('+t+')')(); if(o&&typeof o==='object') return o; }catch(e){} return null; }
-
-function initCloud(){ const cfg=loadCloudCfg(); CLOUD.cfg=cfg; if(!cfg){ setCloudStatus('off'); return; }
-  if(!window.firebase||!firebase.initializeApp){ setCloudStatus('error','Firebase SDK not loaded (blocked by this sandbox, or you are offline). Save the file and open it locally.'); return; }
-  try{ setCloudStatus('connecting');
-    CLOUD.app=(firebase.apps&&firebase.apps.length)?firebase.app():firebase.initializeApp(cfg);
-    CLOUD.db=firebase.firestore(); CLOUD.ready=true;
-    if(firebase.auth){ CLOUD.auth=firebase.auth();
-      CLOUD.auth.onAuthStateChanged(u=>{ CLOUD.user=u; renderCloudPill(); if(!document.getElementById('cloudModal').hidden) renderCloudSettings(); });
-      CLOUD.auth.signInAnonymously().catch(()=>{}); }
-    cloudSubscribe();
-  }catch(e){ setCloudStatus('error',friendlyErr(e)); }
-}
-function cloudSubscribe(){ CLOUD.unsub.forEach(u=>{try{u();}catch(e){}}); CLOUD.unsub=[]; CLOUD._lastSig=null;
-  const col=n=>CLOUD.db.collection('sciquest_'+n); const onErr=e=>setCloudStatus('error',friendlyErr(e));
-  CLOUD.unsub.push(col('students').onSnapshot(sn=>{ const o={}; sn.forEach(d=>o[d.id]=d.data()); CLOUD.cache.students=o; cloudAssemble(); },onErr));
-  CLOUD.unsub.push(col('assessments').onSnapshot(sn=>{ const o={}; sn.forEach(d=>o[d.id]=normalizeAssessment({...d.data(),id:d.id})); CLOUD.cache.assessments=o; cloudAssemble(); },onErr));
-  CLOUD.unsub.push(col('remarks').onSnapshot(sn=>{ const o={}; sn.forEach(d=>{ const v=d.data(); o[d.id]=v&&v.text!=null?v.text:''; }); CLOUD.cache.remarks=o; cloudAssemble(); },onErr));
-  CLOUD.unsub.push(col('confidence').onSnapshot(sn=>{ const o={}; sn.forEach(d=>{ const v=d.data(); o[d.id]=Array.isArray(v.entries)?v.entries.map(normalizeConfidenceEntry):[]; }); CLOUD.cache.confidence=o; cloudAssemble(); },onErr));
-}
-function cloudSig(next){ const A=(next.assessments||[]).slice().sort((a,b)=>String(a.id).localeCompare(String(b.id)))
-    .map(a=>({id:a.id,name:a.name,year:a.year,form:a.form,term:a.term,seq:a.seq,type:a.type,includeInMastery:a.includeInMastery,fullTotal:a.fullTotal,skillMax:a.skillMax,aspectMax:a.aspectMax,skillCodes:a.skillCodes,results:a.results}));
-  const rep=(k,v)=>(v&&typeof v==='object'&&!Array.isArray(v))?Object.keys(v).sort().reduce((o,kk)=>{o[kk]=v[kk];return o;},{}):v;
-  return JSON.stringify({s:next.students||{},a:A,r:next.remarks||{},c:next.confidence||{}},rep); }
-function cloudAssemble(){ setCloudStatus('live');
-  const next=normalizeDB({students:deepCopy(CLOUD.cache.students),assessments:Object.values(CLOUD.cache.assessments),remarks:deepCopy(CLOUD.cache.remarks),confidence:deepCopy(CLOUD.cache.confidence)});
-  const sig=cloudSig(next); if(sig===CLOUD._lastSig) return; CLOUD._lastSig=sig;
-  DB=next; saveDB(); render(); }
-function cloudUpsertAssessment(a){ if(!CLOUD.ready||a.demo) return; const id=a.id||slug(a.name);
-  const data={name:a.name,year:a.year||'',form:a.form||'',term:a.term||'',seq:a.seq||0,type:a.type||DEFAULT_ASSESSMENT_TYPE,includeInMastery:a.includeInMastery!==false,
-    createdAt:a.createdAt||Date.now(),skillMax:a.skillMax,aspectMax:a.aspectMax,fullTotal:a.fullTotal,results:a.results,skillCodes:a.skillCodes,demo:false,
-    updatedAt:Date.now(),updatedBy:(CLOUD.user&&(CLOUD.user.email||CLOUD.user.displayName))||'anonymous'};
-  CLOUD.db.collection('sciquest_assessments').doc(id).set(data).catch(e=>showToast('Cloud save failed: '+friendlyErr(e))); }
-function cloudUpsertStudent(s){ if(!CLOUD.ready||!s) return; CLOUD.db.collection('sciquest_students').doc(s.sid).set({sid:s.sid,name:s.name||'',classNo:s.classNo||''},{merge:true}).catch(()=>{}); }
-function cloudUpsertRemark(sid,text){ if(!CLOUD.ready) return; CLOUD.db.collection('sciquest_remarks').doc(sid).set({text:text||'',updatedAt:Date.now(),updatedBy:(CLOUD.user&&(CLOUD.user.email||''))||''}).catch(()=>{}); }
-function cloudUpsertConfidence(sid){ if(!CLOUD.ready) return; const entries=((DB.confidence||{})[sid]||[]).map(normalizeConfidenceEntry);
-  CLOUD.db.collection('sciquest_confidence').doc(sid).set({entries,updatedAt:Date.now(),updatedBy:(CLOUD.user&&(CLOUD.user.email||''))||''}).catch(e=>showToast('Cloud confidence save failed: '+friendlyErr(e))); }
-function cloudDeleteAssessment(id){ if(!CLOUD.ready) return; CLOUD.db.collection('sciquest_assessments').doc(id).delete().catch(e=>showToast('Cloud delete failed: '+friendlyErr(e))); }
-function cloudPushAll(){ if(!CLOUD.ready) return; DB.assessments.forEach(a=>{ if(!a.demo) cloudUpsertAssessment(a); }); Object.values(DB.students).forEach(cloudUpsertStudent); Object.entries(DB.remarks||{}).forEach(([sid,t])=>cloudUpsertRemark(sid,t)); Object.keys(DB.confidence||{}).forEach(sid=>cloudUpsertConfidence(sid)); }
-async function cloudWipeAll(){ if(!CLOUD.ready) return; for(const n of ['students','assessments','remarks','confidence']){ const sn=await CLOUD.db.collection('sciquest_'+n).get(); const b=CLOUD.db.batch(); sn.forEach(d=>b.delete(d.ref)); await b.commit(); } }
-async function cloudConnect(text){ const cfg=parseCfgText(text);
-  if(!cfg||!cfg.projectId||!cfg.apiKey){ showToast('Invalid config — it must include at least apiKey and projectId.'); return; }
-  saveCloudCfg(cfg); try{ CLOUD.unsub.forEach(u=>{try{u();}catch(e){}}); CLOUD.unsub=[]; if(CLOUD.app){ await CLOUD.app.delete(); CLOUD.app=null; } }catch(e){}
-  CLOUD.ready=false; CLOUD._lastSig=null; initCloud(); showToast('Connecting to cloud…'); }
-async function cloudDisconnect(){ CLOUD.unsub.forEach(u=>{try{u();}catch(e){}}); CLOUD.unsub=[];
-  try{ if(CLOUD.app) await CLOUD.app.delete(); }catch(e){} CLOUD.app=CLOUD.db=CLOUD.auth=CLOUD.user=null; CLOUD.ready=false; CLOUD._lastSig=null;
-  clearCloudCfg(); setCloudStatus('off'); showToast('Disconnected — local only.'); }
-function cloudSignInGoogle(){ if(!CLOUD.auth){ showToast('Connect to a project first.'); return; } const p=new firebase.auth.GoogleAuthProvider();
-  CLOUD.auth.signInWithPopup(p).then(()=>{ showToast('Signed in'); renderCloudSettings(); }).catch(e=>showToast('Sign-in failed: '+friendlyErr(e))); }
-function cloudSignOut(){ if(!CLOUD.auth) return; CLOUD.auth.signOut().then(()=>{ CLOUD.auth.signInAnonymously().catch(()=>{}); renderCloudSettings(); }); }
-
-function renderCloudPill(){ const el=document.getElementById('cloudPill'); if(!el) return;
-  const map={off:['off','☁️ Local only'],connecting:['connecting','⟳ Connecting…'],live:['live','☁️ Cloud · Live'],error:['error','⚠️ Cloud error']};
-  const [cls,txt]=map[CLOUD.status]||map.off; el.className='cloudpill '+cls;
-  let extra=''; if(CLOUD.status==='live'&&CLOUD.user&&CLOUD.user.email) extra=' · '+esc(CLOUD.user.email.split('@')[0]);
-  el.innerHTML='<span class="dot"></span>'+txt+extra;
-  el.title=CLOUD._msg||({off:'Not connected. Click to set up shared cloud storage.',connecting:'Connecting to Firebase…',live:'Connected — changes sync to all teachers.',error:'Cloud error — click for details.'}[CLOUD.status]||''); }
-
-const RULES_TEXT=[
-'rules_version = \'2\';',
-'service cloud.firestore {',
-'  match /databases/{database}/documents {',
-'    // Any signed-in user (incl. anonymous) can read & write:',
-'    match /{doc=**} {',
-'      allow read, write: if request.auth != null;',
-'    }',
-'  }',
-'}'
-].join('\n');
-const RULES_STRICT=[
-'// Stricter: only your school\'s Google accounts',
-'match /{doc=**} {',
-'  allow read, write: if request.auth != null',
-'    && request.auth.token.email.matches(\'.*@yourschool[.]edu[.]hk\');',
-'}'
-].join('\n');
-
-function renderCloudSettings(){ const body=document.getElementById('cloudBody'); const cfg=loadCloudCfg();
-  const sdkOk=!!(window.firebase&&firebase.initializeApp);
-  const cfgText=cfg?JSON.stringify(cfg,null,2):'';
-  const userLine=CLOUD.user?(CLOUD.user.isAnonymous?'Signed in anonymously':('Signed in as '+esc(CLOUD.user.email||CLOUD.user.displayName||'user'))):'Not signed in';
-  let statusBox='';
-  if(CLOUD.status==='live') statusBox=`<div class="okbox">✅ Connected &amp; live. Uploads, remarks and confidence checks sync to every teacher using the same config.</div>`;
-  else if(CLOUD.status==='error') statusBox=`<div class="warn">⚠️ ${esc(CLOUD._msg||'Cloud error.')}</div>`;
-  else if(CLOUD.status==='connecting') statusBox=`<div class="okbox">⟳ Connecting…</div>`;
-  else statusBox=`<div class="okbox" style="background:#152039;border-color:#26304d;color:#93a0bd">Currently <b>local only</b> — data lives in this browser. Paste a Firebase config below to enable shared storage.</div>`;
-  const sandboxWarn=!sdkOk?`<div class="warn">The Firebase SDK didn't load. This in-chat preview blocks Google's domains. <b>Save this HTML file and open it directly in your browser</b> or host it, then connect.</div>`:'';
-  const authBlock=(CLOUD.status==='live'||CLOUD.status==='connecting')?`
-    <div class="authrow"><div style="flex:1"><div style="font-weight:700;font-size:13px">👤 ${userLine}</div>
-      <div class="small muted">Sign-in identifies who uploaded each assessment. Optional.</div></div>
-      <div class="btnrow">
-        <button class="btn small" id="cloudGoogle">Sign in with Google</button>
-        ${CLOUD.user&&!CLOUD.user.isAnonymous?'<button class="btn ghost small" id="cloudSignout">Sign out</button>':''}
-      </div></div>`:'';
-  body.innerHTML=`
-    ${statusBox}${sandboxWarn}${authBlock}
-    <details class="setup"><summary>📘 One-time setup</summary>
-      <ol>
-        <li>Go to <b>console.firebase.google.com</b> → <b>Add project</b>.</li>
-        <li>Open <b>Build → Firestore Database → Create database</b>.</li>
-        <li>Open <b>Build → Authentication → Get started</b>, and enable <b>Anonymous</b> and optionally <b>Google</b> sign-in.</li>
-        <li>Go to <b>Project settings → General → Your apps → Web</b>, register an app, and copy the <code>firebaseConfig</code> object.</li>
-        <li>Paste that config below and click <b>Connect &amp; save</b>.</li>
-        <li>In <b>Firestore → Rules</b>, paste the rules shown below and publish.</li>
-      </ol>
-    </details>
-    <div class="field"><label>Firebase config</label>
-      <textarea id="cloudCfg" placeholder='{
-  "apiKey": "AIza…",
-  "authDomain": "sci-skills.firebaseapp.com",
-  "projectId": "sci-skills",
-  "storageBucket": "sci-skills.appspot.com",
-  "messagingSenderId": "1234567890",
-  "appId": "1:1234567890:web:abc123"
-}'>${esc(cfgText)}</textarea></div>
-    <div class="btnrow" style="margin-bottom:14px">
-      <button class="btn" id="cloudConnect">${cfg?'Reconnect / save':'Connect &amp; save'}</button>
-      ${cfg?'<button class="btn ghost" id="cloudDisconnect">Disconnect (local only)</button>':''}
-    </div>
-    <div class="field"><label>Recommended Firestore security rules</label>
-      <pre class="codeblk">${esc(RULES_TEXT)}</pre></div>
-    <details class="setup"><summary>🔒 Stricter option — restrict to your school's emails</summary>
-      <p class="small muted" style="margin:8px 0">Enable Google sign-in, then replace the inner <code>match</code> with:</p>
-      <pre class="codeblk">${esc(RULES_STRICT)}</pre></details>
-    ${CLOUD.status==='live'?`<div class="field"><label>Danger zone</label>
-      <button class="btn danger" id="cloudWipe">🗑️ Delete ALL cloud data: students, assessments, remarks and confidence checks</button></div>`:''}
-    <div class="small muted">Note: the Firebase web config is not a secret — access is controlled by your rules, not by hiding the config.</div>`;
-  wireCloudSettings();
-}
-function wireCloudSettings(){
-  const g=id=>document.getElementById(id);
-  if(g('cloudConnect')) g('cloudConnect').onclick=()=>cloudConnect(g('cloudCfg').value);
-  if(g('cloudDisconnect')) g('cloudDisconnect').onclick=async()=>{ if(await showConfirm('Disconnect from cloud?','This device will use local storage only. Cloud data is not deleted.')) cloudDisconnect(); };
-  if(g('cloudGoogle')) g('cloudGoogle').onclick=cloudSignInGoogle;
-  if(g('cloudSignout')) g('cloudSignout').onclick=cloudSignOut;
-  if(g('cloudWipe')) g('cloudWipe').onclick=async()=>{ if(await showConfirm('Delete ALL cloud data?','This erases every student, assessment, remark and confidence check for ALL teachers. This cannot be undone.')){ try{ await cloudWipeAll(); showToast('Cloud data wiped'); }catch(e){ showToast('Wipe failed: '+friendlyErr(e)); } } };
-}
-function openCloud(){ renderCloudSettings(); document.getElementById('cloudModal').hidden=false; }
-
-/* ============================================================ CHARTS (SVG) ============================================================ */
-function radarSVG(sVals,cVals){ const size=280,c=size/2,R=92,n=ASPECTS.length; const ang=i=>-Math.PI/2+i*2*Math.PI/n;
-  const P=(i,r)=>[(c+Math.cos(ang(i))*r).toFixed(1),(c+Math.sin(ang(i))*r).toFixed(1)]; let g='';
-  [0.25,0.5,0.75,1].forEach(f=>{ let pts=[]; for(let i=0;i<n;i++){ const[x,y]=P(i,R*f); pts.push(x+','+y);} g+=`<polygon points="${pts.join(' ')}" fill="none" stroke="#26304d" stroke-width="1"/>`; });
-  for(let i=0;i<n;i++){ const[x,y]=P(i,R); g+=`<line x1="${c}" y1="${c}" x2="${x}" y2="${y}" stroke="#26304d" stroke-width="1"/>`;
-    const[lx,ly]=P(i,R+16); let anch='middle'; const ax=parseFloat(lx); if(ax>c+6)anch='start'; else if(ax<c-6)anch='end';
-    g+=`<text x="${lx}" y="${ly}" fill="#93a0bd" font-size="10" text-anchor="${anch}" dominant-baseline="middle">${ASPECTS[i].icon} ${ASPECTS[i].name}</text>`; }
+/* ============================================================
+   7 · CHARTS (SVG)
+============================================================ */
+function radarSVG(sVals,cVals){
+  const size=286,c=size/2,R=92,n=ASPECTS.length;
+  const ang=i=>-Math.PI/2+i*2*Math.PI/n;
+  const P=(i,r)=>[(c+Math.cos(ang(i))*r).toFixed(1),(c+Math.sin(ang(i))*r).toFixed(1)];
+  const defs=`<defs>
+    <filter id="rg" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="3.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <linearGradient id="sweep" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#3ce0ff" stop-opacity="0"/><stop offset="100%" stop-color="#3ce0ff" stop-opacity=".85"/></linearGradient></defs>`;
+  let g='';
+  [0.25,0.5,0.75,1].forEach((f,k)=>{ let pts=[]; for(let i=0;i<n;i++){ const[x,y]=P(i,R*f); pts.push(x+','+y);}
+    g+=`<polygon points="${pts.join(' ')}" fill="none" stroke="#223862" stroke-width="1" ${k<3?'stroke-dasharray="3 4"':''}/>`; });
+  g+=`<circle cx="${c}" cy="${c}" r="2.4" fill="#3ce0ff"/>`;
+  for(let i=0;i<n;i++){ const[x,y]=P(i,R); g+=`<line x1="${c}" y1="${c}" x2="${x}" y2="${y}" stroke="#223862" stroke-width="1"/>`;
+    const[lx,ly]=P(i,R+17); let anch='middle'; const ax=parseFloat(lx); if(ax>c+6)anch='start'; else if(ax<c-6)anch='end';
+    g+=`<text x="${lx}" y="${ly}" fill="${ASPECTS[i].raw}" font-family="Share Tech Mono,monospace" font-size="10" text-anchor="${anch}" dominant-baseline="middle">${ASPECTS[i].icon} ${ASPECTS[i].name.toUpperCase()}</text>`; }
+  const sweep=`<line x1="${c}" y1="${c}" x2="${c}" y2="${c-R}" stroke="url(#sweep)" stroke-width="2.4" opacity=".7">
+    <animateTransform attributeName="transform" type="rotate" from="0 ${c} ${c}" to="360 ${c} ${c}" dur="7s" repeatCount="indefinite"/></line>`;
   const poly=(vals,stroke,fill,dash)=>{ let pts=[]; for(let i=0;i<n;i++){ let v=vals[ASPECTS[i].key]; if(v==null)v=0; const r=R*Math.max(0,Math.min(100,v))/100; const[x,y]=P(i,r); pts.push(x+','+y);} return `<polygon points="${pts.join(' ')}" fill="${fill}" stroke="${stroke}" stroke-width="2" ${dash?'stroke-dasharray="4 3"':''}/>`; };
-  let cl=cVals?poly(cVals,'#93a0bd','rgba(147,160,189,0.10)',true):''; let sd=poly(sVals,'#7c9cff','rgba(124,156,255,0.28)',false);
-  let dots=''; for(let i=0;i<n;i++){ let v=sVals[ASPECTS[i].key]; if(v==null)continue; const r=R*Math.max(0,Math.min(100,v))/100; const[x,y]=P(i,r); dots+=`<circle cx="${x}" cy="${y}" r="3.2" fill="#7c9cff"/>`; }
-  return `<svg viewBox="0 0 ${size} ${size}" width="100%" style="max-width:300px" role="img" aria-label="Aspect radar chart">${g}${cl}${sd}${dots}</svg>`; }
-function lineChartSVG(sid){ const arr=studentAssessments(sid); if(!arr.length) return '<div class="muted small">No analysis data.</div>';
-  const W=680,H=300,padL=32,padR=14,padT=14,padB=76,plotW=W-padL-padR,plotH=H-padT-padB,n=arr.length;
-  const xAt=i=>n===1?padL+plotW/2:padL+plotW*i/(n-1), yAt=v=>padT+plotH*(1-v/100); let g='';
-  [0,25,50,75,100].forEach(v=>{ const y=yAt(v); g+=`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="#26304d" stroke-width="1"/><text x="${padL-6}" y="${y+3}" fill="#93a0bd" font-size="9" text-anchor="end">${v}</text>`; });
-  arr.forEach((a,i)=>{ const x=xAt(i); const sh=a.name.length>16?a.name.slice(0,15)+'…':a.name; g+=`<text x="${x}" y="${H-padB+15}" fill="#93a0bd" font-size="9" text-anchor="end" transform="rotate(-32 ${x} ${H-padB+15})">${esc(sh)}</text>`; });
-  ASPECTS.forEach(a=>{ const pts=[]; arr.forEach((as,i)=>{ const max=as.aspectMax[a.key], earned=as.results[sid].aspectEarned[a.key];
+  const cl=cVals?poly(cVals,'#8ea4c9','rgba(142,164,201,0.10)',true):'';
+  const sd=`<g filter="url(#rg)">${poly(sVals,'#3ce0ff','rgba(60,224,255,0.24)',false)}</g>`;
+  let dots=''; for(let i=0;i<n;i++){ let v=sVals[ASPECTS[i].key]; if(v==null)continue; const r=R*Math.max(0,Math.min(100,v))/100; const[x,y]=P(i,r); dots+=`<circle cx="${x}" cy="${y}" r="3.4" fill="#eafcff" stroke="#3ce0ff" stroke-width="1.6"/>`; }
+  return `<svg viewBox="0 0 ${size} ${size}" width="100%" style="max-width:306px" role="img" aria-label="Aspect radar chart">${defs}${g}${sweep}${cl}${sd}${dots}</svg>`;
+}
+function lineChartSVG(sid){
+  const arr=studentAssessments(sid); if(!arr.length) return '<div class="muted small">No data.</div>';
+  const W=690,H=306,padL=34,padR=14,padT=14,padB=78,plotW=W-padL-padR,plotH=H-padT-padB,n=arr.length;
+  const xAt=i=>n===1?padL+plotW/2:padL+plotW*i/(n-1),yAt=v=>padT+plotH*(1-v/100);
+  const defs=`<defs><filter id="lg" x="-20%" y="-20%" width="140%" height="140%">
+    <feGaussianBlur stdDeviation="2.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+  let g='';
+  [0,25,50,75,100].forEach(v=>{ const y=yAt(v);
+    g+=`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="#223862" stroke-width="1" stroke-dasharray="3 5"/>
+    <text x="${padL-7}" y="${y+3}" fill="#61729a" font-family="Share Tech Mono,monospace" font-size="9" text-anchor="end">${v}</text>`; });
+  arr.forEach((a,i)=>{ const x=xAt(i);
+    g+=`<line x1="${x}" y1="${padT}" x2="${x}" y2="${padT+plotH}" stroke="#16233f" stroke-width="1"/>`;
+    const w=aWeight(a),tagw=Math.abs(w-1)>1e-9?` ×${n1(w)}`:'';
+    const base=a.name.length>15?a.name.slice(0,14)+'…':a.name;
+    g+=`<text x="${x}" y="${H-padB+16}" fill="#8ea4c9" font-family="Share Tech Mono,monospace" font-size="9" text-anchor="end" transform="rotate(-32 ${x} ${H-padB+16})">${esc(base+tagw)}</text>`; });
+  ASPECTS.forEach(a=>{ const pts=[]; arr.forEach((as,i)=>{ const max=as.aspectMax[a.key],earned=as.results[sid].aspectEarned[a.key];
     const pct=(max>0&&earned!=null)?earned/max*100:null; if(pct!=null) pts.push([xAt(i),yAt(pct)]); });
     if(pts.length){ const d=pts.map((p,k)=>(k?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
-      g+=`<path d="${d}" fill="none" stroke="${a.raw}" stroke-width="2.5"/>`; pts.forEach(p=>g+=`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="${a.raw}"/>`); } });
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Aspect trend line chart">${g}</svg>`; }
+      g+=`<g filter="url(#lg)"><path d="${d}" fill="none" stroke="${a.raw}" stroke-width="2.4" stroke-linecap="round"/></g>`;
+      pts.forEach(p=>g+=`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.2" fill="#04070f" stroke="${a.raw}" stroke-width="1.8"/>`); } });
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Aspect trend line chart">${defs}${g}</svg>`;
+}
 
-/* ============================================================ RENDER — ROSTER ============================================================ */
-function renderStats(){ const nS=Object.keys(DB.students).length; const scope=analysisScopeSummary(); const ca=classAspectAverages();
-  const avg=mean(ASPECTS.map(a=>ca[a.key]).filter(x=>x!=null)); const el=document.getElementById('rosterStats');
-  el.innerHTML=`<div class="kpi"><div class="n">${nS}</div><div class="l">Students</div></div>
-    <div class="kpi"><div class="n">${scope.included}/${scope.totalStored}</div><div class="l">Assessments in analysis</div></div>
-    <div class="kpi"><div class="n">${scope.monthly}</div><div class="l">Monthly MC quizzes</div></div>
-    <div class="kpi"><div class="n">${scope.summativeTermsKept}/${scope.summativeTermsTotal}</div><div class="l">Summative terms kept</div></div>
-    <div class="kpi"><div class="n">${fmt(avg)}</div><div class="l">Class mastery</div></div>
-    <div class="kpi"><div class="n">${rankFor(avg).lv?('Lv.'+rankFor(avg).lv):'—'}</div><div class="l">${rankFor(avg).name}</div></div>`; }
+/* ============================================================
+   8 · RENDER — ROSTER
+============================================================ */
+function renderAlerts(){
+  const {tags,marks}=unmappedTotals();
+  const bar=document.getElementById('unmapBar');
+  if(tags){ bar.hidden=false;
+    bar.innerHTML=`<span class="ic">⚠️</span>
+      <div style="flex:1;min-width:200px"><b>${tags} tag${tags===1?'':'s'} (${n1(marks)} marks) could not be matched to an aspect.</b>
+        <div class="small" style="opacity:.85">These marks are held in storage but excluded from all four aspects until you assign them.</div></div>
+      <button class="btn warnb tiny" id="btnFixTags">🏷 Assign now</button>`;
+    document.getElementById('btnFixTags').onclick=openTagMap;
+  } else bar.hidden=true;
+  const c=document.getElementById('tagMapCount');
+  if(c) c.textContent=tags?`(${tags} ⚠)`:'';
+}
+function renderStats(){
+  const nS=Object.keys(DB.students).length,nA=DB.assessments.length;
+  const ca=classAspectAverages(); const avg=mean(ASPECTS.map(a=>ca[a.key]).filter(x=>x!=null));
+  const {marks}=unmappedTotals();
+  const wt=DB.assessments.filter(a=>Math.abs(aWeight(a)-1)>1e-9||hasAspectWeighting(a)).length;
+  document.getElementById('rosterStats').innerHTML=`
+    <div class="kpi"><div class="n">${nS}</div><div class="l">Cadets</div></div>
+    <div class="kpi"><div class="n">${nA}</div><div class="l">Assessments</div></div>
+    <div class="kpi"><div class="n">${fmt(avg)}</div><div class="l">Class mastery (weighted)</div></div>
+    <div class="kpi"><div class="n">${rankFor(avg).lv?('Lv.'+rankFor(avg).lv):'—'}</div><div class="l">${rankFor(avg).name}</div></div>
+    <div class="kpi"><div class="n">${wt}</div><div class="l">Weighted papers</div></div>
+    ${marks?`<div class="kpi warn"><div class="n">${n1(marks)}</div><div class="l">Unassigned marks</div></div>`:''}`;
+}
 function trendArrow(sid){ const t=overallTrend(sid);
   if(t.label==='improving') return '<span class="trendA" style="color:var(--up)" title="Improving">▲</span>';
   if(t.label==='declining') return '<span class="trendA" style="color:var(--down)" title="Declining">▼</span>';
   if(t.label==='steady') return '<span class="trendA" style="color:var(--flat)" title="Steady">►</span>';
   return '<span class="trendA muted" title="Baseline">•</span>'; }
-function renderRosterList(){ const q=(document.getElementById('search').value||'').toLowerCase().trim();
-  const sort=document.getElementById('sortby').value; let list=Object.values(DB.students);
+function renderRosterList(){
+  const q=(document.getElementById('search').value||'').toLowerCase().trim();
+  const sort=document.getElementById('sortby').value;
+  let list=Object.values(DB.students);
   if(q) list=list.filter(s=>(s.name||'').toLowerCase().includes(q)||(s.sid||'').toLowerCase().includes(q)||(s.classNo||'').toLowerCase().includes(q));
-  list.forEach(s=>{ s._avg=overallAvg(s.sid); s._n=studentAssessments(s.sid).length; s._allN=studentAllAssessments(s.sid).length; s._conf=confidenceCount(s.sid); s._t=overallTrend(s.sid).delta??-999; });
+  list.forEach(s=>{ s._avg=overallAvg(s.sid); s._n=studentAssessments(s.sid).length; s._t=overallTrend(s.sid).delta??-999; });
   const byName=(a,b)=>(a.name||'').localeCompare(b.name||'');
-  list.sort((a,b)=>{ if(sort==='name') return byName(a,b); if(sort==='class') return (a.classNo||'').localeCompare(b.classNo||'',undefined,{numeric:true});
-    if(sort==='avg') return (b._avg??-1)-(a._avg??-1); if(sort==='trend') return (b._t)-(a._t)||byName(a,b);
+  list.sort((a,b)=>{ if(sort==='name') return byName(a,b);
+    if(sort==='class') return (a.classNo||'').localeCompare(b.classNo||'',undefined,{numeric:true});
+    if(sort==='avg') return (b._avg??-1)-(a._avg??-1);
+    if(sort==='trend') return (b._t)-(a._t)||byName(a,b);
     if(sort==='count') return b._n-a._n||byName(a,b); return 0; });
   const wrap=document.getElementById('rosterList');
-  if(!list.length){ const showDemoBtn=q?'':(CLOUD.status!=='live'?'<button class="btn" id="emptyDemo">✨ Load sample data</button>':'');
-    wrap.innerHTML=`<div class="empty"><h3>${q?'No matching students':'No data yet'}</h3>
-      <p>${q?'Try a different search.':(CLOUD.status==='live'?'The shared database is empty. Upload a workbook to add results for everyone.':'Upload a workbook, connect cloud storage, or load the sample data.')}</p>${showDemoBtn}</div>`;
-    const b=document.getElementById('emptyDemo'); if(b) b.onclick=()=>{ loadDemo(); render(); showToast('Sample data loaded'); }; return; }
-  wrap.innerHTML=`<div class="roster-grid">`+list.map(s=>{ const ini=(s.name||'?').trim().charAt(0).toUpperCase()||'?'; const col=avatarColor(s.name); const r=rankFor(s._avg);
+  if(!list.length){ wrap.innerHTML=`<div class="empty"><h3>${q?'No matching students':'No data yet'}</h3>
+    <p>${q?'Try a different search.':'Upload a workbook to get started, or load the sample data.'}</p>
+    ${q?'':'<button class="btn" onclick="loadDemo();saveDB();render();showToast(\'Sample data loaded\')">✨ Load sample data</button>'}</div>`; return; }
+  wrap.innerHTML=`<div class="roster-grid">`+list.map(s=>{
+    const ini=(s.name||'?').trim().charAt(0).toUpperCase()||'?',col=avatarColor(s.name),r=rankFor(s._avg);
     const bars=ASPECTS.map(a=>{ const p=cumulative(s.sid,a.key,'aspect'); const w=p==null?0:Math.max(2,p);
       return `<div class="mb"><span class="mbl" style="color:${a.raw}">${a.key}</span><div class="mbt"><div class="mbf" style="width:${w}%;background:${a.raw}"></div></div><span class="mbv">${fmt(p)}</span></div>`; }).join('');
     return `<div class="scard" data-sid="${esc(s.sid)}">
-      <div class="scard-top"><div class="avatar" style="background:${col}">${esc(ini)}</div>
-        <div class="sinfo"><div class="sname">${esc(s.name||'(no name)')} ${trendArrow(s.sid)}</div><div class="smeta">${esc(s.classNo||'—')} · ${esc(s.sid)}</div></div>
-        <div class="savg"><div class="big">${fmt(s._avg)}</div><span class="rankpill" style="background:${r.raw}">${r.name}</span></div></div>
+      <div class="scard-top">
+        <div class="avatar" style="background:${col}">${esc(ini)}</div>
+        <div class="sinfo"><div class="sname">${esc(s.name||'(no name)')} ${trendArrow(s.sid)}</div>
+          <div class="smeta">${esc(s.classNo||'—')} · ${esc(s.sid)}</div></div>
+        <div class="savg"><div class="big">${fmt(s._avg)}</div><span class="rankpill" style="background:${r.raw}">${r.name}</span></div>
+      </div>
       <div class="minibars">${bars}</div>
-      <div class="scard-foot">${s._n} analysis record${s._n===1?'':'s'} · ${s._allN} stored · ${s._conf} confidence check${s._conf===1?'':'s'} · ${cohortLabel(s.sid)}</div></div>`; }).join('')+`</div>`; }
-function renderRoster(){ renderStats(); renderRosterList(); }
+      <div class="scard-foot">${s._n} assessment${s._n===1?'':'s'} · ${cohortLabel(s.sid)}</div>
+    </div>`; }).join('')+`</div>`;
+}
+function renderRoster(){ renderAlerts(); renderStats(); renderRosterList(); }
 
-/* ============================================================ RENDER — CONFIDENCE / SKILL CHANGE HELPERS ============================================================ */
-function confidenceFormHTML(sid){
-  const entries=confidenceEntries(sid);
-  const latest=entries[entries.length-1]||{};
-  const latestA=studentAllAssessments(sid).slice(-1)[0]||{};
-  const codes=allSkillCodes();
-  const groups=ASPECTS.map(a=>{
-    const rows=SUBSKILLS[a.key].map(c=>{
-      let val=num(latest.skills&&latest.skills[c]); if(isNaN(val)) val=3; val=Math.max(1,Math.min(5,Math.round(val)));
-      return `<div class="slider-row"><div class="c" style="color:${a.raw}">${c}</div>
-        <input class="conf-slider" data-conf-code="${c}" type="range" min="1" max="5" step="1" value="${val}" aria-label="${esc(c+' '+(SKILL_NAMES[c]||c))}">
-        <div class="conf-num">${val}</div>
-        <div></div><div class="small muted" style="margin-top:-5px">${esc(SKILL_NAMES[c]||c)}</div><div></div>
-      </div>`;
-    }).join('');
-    return `<div class="slider-block"><div class="slider-title" style="color:${a.raw}">${a.icon} ${a.name}</div>${rows}</div>`;
-  }).join('');
-  const titleDefault='Pre-class confidence check — '+todayISO();
-  return `<div class="conf-form" id="confForm" hidden>
-    <div class="conf-scale"><b>Scale:</b> 1 = Not confident yet · 2 = Low confidence · 3 = Some confidence · 4 = Confident · 5 = Very confident</div>
-    <div class="conf-fields">
-      <div><label>Title</label><input id="confTitle" value="${esc(titleDefault)}"></div>
-      <div><label>Date</label><input id="confDate" type="date" value="${esc(todayISO())}"></div>
-      <div><label>Academic year</label><input id="confYear" value="${esc(latestA.year||latest.year||'')}"></div>
-      <div><label>Form</label><select id="confFormLevel">${['S1','S2','S3'].map(f=>`<option ${((latestA.form||latest.form)==f)?'selected':''}>${f}</option>`).join('')}</select></div>
-      <div><label>Term</label><input id="confTerm" value="${esc(latestA.term||latest.term||'')}"></div>
-      <div><label>Sequence</label><input id="confSeq" type="number" value="${entries.length+1}"></div>
-    </div>
-    ${groups}
-    <div class="btnrow" style="margin-top:12px;justify-content:flex-end">
-      <button class="btn ghost small" id="btnCancelConfidence">Cancel</button>
-      <button class="btn small" id="btnSaveConfidence">Save confidence check</button>
-    </div>
-  </div>`;
-}
-function confidenceOverviewHTML(sid){
-  const entries=confidenceEntries(sid);
-  const latest=entries[entries.length-1];
-  const cards=ASPECTS.map(a=>{
-    const cd=confidenceDeltas(confidenceSeriesForKey(sid,a.key,'aspect'));
-    const pct=cd.current==null?0:cd.current/5*100;
-    const mastery=cumulative(sid,a.key,'aspect');
-    return `<div class="conf-card">
-      <div class="top"><div class="name" style="color:${a.raw}">${a.icon} ${a.name}</div><div class="score">${confFmt(cd.current)}</div></div>
-      <div class="confbar"><div class="fill" style="width:${Math.max(0,Math.min(100,pct))}%"></div></div>
-      <div class="sub"><span class="dlabel">vs last</span>${confDeltaHTML(cd.vsPrev)}<span class="dlabel">vs first</span>${confDeltaHTML(cd.vsFirst)}</div>
-      <div class="small muted" style="margin-top:5px">Current mastery: <b>${fmt(mastery)}</b></div>
-    </div>`;
-  }).join('');
-  const history=entries.slice(-5).reverse().map(e=>{
-    const vals=Object.values(e.skills||{}).map(v=>num(v)).filter(v=>!isNaN(v));
-    const avg=mean(vals);
-    return `<div class="conf-history-row">
-      <div class="main"><div class="title">${esc(e.title||'Confidence check')}</div><div class="meta">${esc(e.date||'no date')} · ${esc(e.year||'')} ${esc(e.form||'')} ${esc(e.term||'')} · average ${confFmt(avg)}</div></div>
-      <button class="btn ghost small" data-del-conf="${esc(e.id)}">Delete</button>
-    </div>`;
-  }).join('');
-  return `<div class="panel" style="margin-bottom:14px">
-    <div class="row-between"><h3>Pre-class confidence check</h3><button class="btn small" id="btnAddConfidence">➕ Add check</button></div>
-    <div class="confidence-note">Students can record confidence before a lesson, monthly online MC quiz, or assessment. The tracker shows whether confidence and performance are improving together.</div>
-    ${latest?`<div class="okbox">Latest: <b>${esc(latest.title||'Confidence check')}</b> · ${esc(latest.date||'no date')}</div>`:`<div class="warn">No pre-class confidence check has been recorded for this student yet.</div>`}
-    <div class="conf-grid">${cards}</div>
-    ${confidenceFormHTML(sid)}
-    <div class="row-between" style="margin-top:12px"><b class="small">Recent confidence history</b><span class="small muted">${entries.length} record${entries.length===1?'':'s'}</span></div>
-    <div class="confidence-history">${history||'<div class="muted small">No confidence history yet.</div>'}</div>
-  </div>`;
-}
-function skillChangeTableHTML(sid){
-  const codes=[...presentSkillCodes(sid)];
-  if(!codes.length) return '<div class="muted small">No skill-level analysis data yet.</div>';
-  const rows=codes.map(c=>{
-    const akey=aspectOf(c), asp=ASPECTS.find(a=>a.key===akey)||ASPECTS[0];
-    const st=skillStats(sid,c);
-    const prev=st.vsPrev==null?null:st.current-st.vsPrev;
-    const conf=confidenceDeltas(confidenceSeriesForKey(sid,c,'skill'));
-    return {c,asp,st,prev,conf};
-  }).sort((x,y)=>{
-    const xd=x.st.vsPrev==null?999:x.st.vsPrev;
-    const yd=y.st.vsPrev==null?999:y.st.vsPrev;
-    return xd-yd;
-  });
-  const biggestUp=rows.filter(r=>r.st.vsPrev!=null).sort((a,b)=>b.st.vsPrev-a.st.vsPrev)[0];
-  const biggestDown=rows.filter(r=>r.st.vsPrev!=null).sort((a,b)=>a.st.vsPrev-b.st.vsPrev)[0];
-  const confUp=rows.filter(r=>r.conf.vsPrev!=null).sort((a,b)=>b.conf.vsPrev-a.conf.vsPrev)[0];
-  const summary=`<div class="change-summary">
-    <div class="change-mini"><div class="label">Most improved since last assessment</div><div class="main">${biggestUp?`${esc(biggestUp.c)} ${deltaHTML(biggestUp.st.vsPrev)}`:'—'}</div></div>
-    <div class="change-mini"><div class="label">Largest drop since last assessment</div><div class="main">${biggestDown?`${esc(biggestDown.c)} ${deltaHTML(biggestDown.st.vsPrev)}`:'—'}</div></div>
-    <div class="change-mini"><div class="label">Confidence improvement</div><div class="main">${confUp?`${esc(confUp.c)} ${confDeltaHTML(confUp.conf.vsPrev)}`:'—'}</div></div>
-  </div>`;
-  const body=rows.map(r=>`<tr>
-    <td class="codecell" style="color:${r.asp.raw}">${esc(r.c)}</td>
-    <td><div class="skillnm">${esc(SKILL_NAMES[r.c]||r.c)}</div><div class="small muted">${esc(r.asp.name)}</div></td>
-    <td class="right"><b>${fmt(r.st.cum)}</b></td>
-    <td class="right">${fmt(r.st.current)}</td>
-    <td class="right">${fmt(r.prev)}</td>
-    <td class="right">${deltaHTML(r.st.vsPrev)}</td>
-    <td class="right">${confFmt(r.conf.current)} <span style="display:inline-block;margin-left:5px">${confDeltaHTML(r.conf.vsPrev)}</span></td>
-  </tr>`).join('');
-  return `${summary}<div class="tablewrap"><table class="skilltable">
-    <thead><tr><th>Code</th><th>Skill</th><th class="right">Cumulative mastery</th><th class="right">Latest assessment</th><th class="right">Previous assessment</th><th class="right">Assessment change</th><th class="right">Confidence change</th></tr></thead>
-    <tbody>${body}</tbody></table></div>
-    <div class="small muted" style="margin-top:8px">Note: Latest / previous assessment values are based on records currently used in analysis: monthly MC quizzes plus the latest ${SUMMATIVE_KEEP_TERMS} summative terms.</div>`;
-}
-
-/* ============================================================ RENDER — STUDENT ============================================================ */
-function renderStudent(sid){ const st=DB.students[sid]; if(!st){ currentView='roster'; showView(); renderRoster(); return; }
-  const arr=studentAssessments(sid); const allArr=studentAllAssessments(sid); const oAvg=overallAvg(sid); const oRank=rankFor(oAvg); const xp=xpInfo(oAvg);
-  const ini=(st.name||'?').trim().charAt(0).toUpperCase()||'?'; const col=avatarColor(st.name); const ca=classAspectAverages();
+/* ============================================================
+   9 · RENDER — STUDENT STAT SHEET
+============================================================ */
+function renderStudent(sid){
+  const st=DB.students[sid],arr=studentAssessments(sid),oAvg=overallAvg(sid);
+  const oRank=rankFor(oAvg),xp=xpInfo(oAvg),ini=(st.name||'?').trim().charAt(0).toUpperCase()||'?';
+  const col=avatarColor(st.name),ca=classAspectAverages();
   const sVals={}; ASPECTS.forEach(a=>sVals[a.key]=cumulative(sid,a.key,'aspect'));
-  const achv=achievements(sid); const mi=mostImproved(sid); const na=needsAttention(sid);
-  const aspectCards=ASPECTS.map(a=>{ const cum=cumulative(sid,a.key,'aspect'); const series=seriesForKey(sid,a.key,'aspect'); const d=deltas(series); const lc=levelChange(series); const w=cum==null?0:Math.max(2,cum);
-    const cd=confidenceDeltas(confidenceSeriesForKey(sid,a.key,'aspect'));
-    let flag=''; if(d.n<=1) flag='<span class="baseline">Baseline</span>'; else if(lc&&lc.dir==='up') flag=`<span class="lvup">⬆ Levelled up! ${lc.from.name}→${lc.to.name}</span>`; else if(lc&&lc.dir==='down') flag=`<span class="lvdn">▼ rank down</span>`;
-    return `<div class="aspect"><div class="aspect-head"><div class="aspect-ic" style="background:${a.raw}22;border:1px solid ${a.raw}66">${a.icon}</div>
-        <div><div class="aspect-name" style="color:${a.raw}">${a.name}</div><div class="small muted">${a.full}</div></div><div class="aspect-pct">${fmt(cum)}</div></div>
+  const achv=achievements(sid),mi=mostImproved(sid),na=needsAttention(sid);
+
+  const aspectCards=ASPECTS.map(a=>{
+    const cum=cumulative(sid,a.key,'aspect'),series=seriesForKey(sid,a.key,'aspect'),d=deltas(series),lc=levelChange(series);
+    const w=cum==null?0:Math.max(2,cum),mix=tagMix(sid,a.key);
+    let flag=''; if(d.n<=1) flag='<span class="baseline">Baseline</span>';
+    else if(lc&&lc.dir==='up') flag=`<span class="lvup">⬆ Levelled up! ${lc.from.name}→${lc.to.name}</span>`;
+    else if(lc&&lc.dir==='down') flag=`<span class="lvdn">▼ rank down</span>`;
+    const mixHTML=(mix.broad||mix.det)?`<span class="tagmix" title="Weighted marks tagged with the broad code vs. detailed sub-skill codes">◈ broad ${mix.broad} / detailed ${mix.det}</span>`:'';
+    return `<div class="aspect">
+      <div class="aspect-head">
+        <div class="aspect-ic" style="background:${a.raw}22;border:1px solid ${a.raw}66">${a.icon}</div>
+        <div><div class="aspect-name" style="color:${a.raw}">${a.name}</div><div class="small muted">${a.full} · tag “${a.key}”</div></div>
+        <div class="aspect-pct">${fmt(cum)}</div>
+      </div>
       <div class="bar"><div class="barf" style="width:${w}%;background:${a.raw}"></div></div>
-      <div class="aspect-foot">${rankBadge(cum)}<span class="dlabel">assessment vs last</span>${deltaHTML(d.vsPrev)}<span class="dlabel">vs first</span>${deltaHTML(d.vsFirst)}${flag}<span class="classavg" style="margin-left:auto">Class ${fmt(ca[a.key])}</span></div>
-      <div class="aspect-foot confline"><span class="dlabel">pre-class confidence</span><b>${confFmt(cd.current)}</b><span class="dlabel">vs last</span>${confDeltaHTML(cd.vsPrev)}<span class="dlabel">vs first</span>${confDeltaHTML(cd.vsFirst)}</div></div>`; }).join('');
+      <div class="aspect-foot">
+        ${rankBadge(cum)}
+        <span class="dlabel">vs last</span>${deltaHTML(d.vsPrev)}
+        <span class="dlabel">vs first</span>${deltaHTML(d.vsFirst)}
+        ${flag}${mixHTML}
+        <span class="classavg" style="margin-left:auto">Class ${fmt(ca[a.key])}</span>
+      </div></div>`; }).join('');
+
   const present=presentSkillCodes(sid);
-  const skillTree=ASPECTS.map(a=>{ const codes=SUBSKILLS[a.key].filter(c=>present.has(c)); if(!codes.length) return '';
-    const rows=codes.map(c=>{ const s=skillStats(sid,c); const w=s.cum==null?0:Math.max(2,s.cum); const conf=confidenceDeltas(confidenceSeriesForKey(sid,c,'skill'));
-      return `<div class="skill"><div class="code" style="color:${a.raw}">${c}</div><div class="body"><div class="nm">${esc(SKILL_NAMES[c]||c)}</div>
+  const skillTree=ASPECTS.map(a=>{
+    const codes=codesForAspect(a.key,present); if(!codes.length) return '';
+    const rows=codes.map(c=>{ const s=skillStats(sid,c),w=s.cum==null?0:Math.max(2,s.cum);
+      const broadChip=(isBroad(c)&&c!=='ENG')?'<span class="chip broad">broad</span>':'';
+      return `<div class="skill">
+        <div class="code" style="color:${a.raw}">${c}</div>
+        <div class="body"><div class="nm">${esc(skillName(c))}${broadChip}</div>
           <div class="bar"><div class="barf" style="width:${w}%;background:${a.raw}"></div></div></div>
         <div class="rt"><div class="rp">${fmt(s.cum)}</div>
-          <div class="skdeltas"><span class="dlabel">評估</span>${deltaHTML(s.vsPrev)}</div>
-          <div class="skdeltas"><span class="dlabel">信心</span>${confFmt(conf.current)} ${confDeltaHTML(conf.vsPrev)}</div>
+          <div class="skdeltas">${deltaHTML(s.vsPrev)}${deltaHTML(s.vsFirst)}</div>
           <div style="margin-top:3px">${rankBadge(s.cum)}</div></div></div>`; }).join('');
     return `<div class="skillgroup"><div class="gt" style="color:${a.raw}">${a.icon} ${a.name}</div>${rows}</div>`; }).join('');
-  let miHTML=`<div class="callout co-good"><div class="ic">🚀</div><div><div class="tt">Most improved</div><div class="mn">${mi?esc(SKILL_NAMES[mi.code]||mi.code):'—'}</div>
-      <div class="small">${mi?`Grown ${deltaHTML(mi.vsFirst)} since the first analysis record — now ${fmt(mi.cum)} (${rankFor(mi.cum).name}).`:'Needs at least two analysis records to measure growth.'}</div></div></div>`;
-  let naHTML=''; if(na){ const isDecl=na.reason==='decline';
-    naHTML=`<div class="callout co-warn"><div class="ic">${isDecl?'⚠️':'🎯'}</div><div><div class="tt">Needs attention</div><div class="mn">${esc(SKILL_NAMES[na.code]||na.code)}</div>
-      <div class="small">${isDecl?`Dropped ${deltaHTML(na.vsPrev)} vs the previous analysis record (now ${fmt(na.cum)}).`:`Lowest current mastery at ${fmt(na.cum)} (${rankFor(na.cum).name}) — a priority for support.`}</div></div></div>`; }
-  const assessList=allArr.map(a=>{ const tot=a.results[sid].total, pc=a.fullTotal>0?tot/a.fullTotal*100:0; const r=rankFor(pc);
-    return `<div class="assess-row"><div class="nm"><div>${esc(a.name)}</div><div class="tag">${assessmentTypePill(a)} ${assessmentScopePill(a)} <span>${esc(a.form||'')}</span> <span>${esc(a.term||'')}</span> <span>${esc(a.year||'')}</span></div>
+
+  let miHTML=`<div class="callout co-good"><div class="ic">🚀</div><div><div class="tt">Most improved</div>
+    <div class="mn">${mi?esc(skillName(mi.code)):'—'}</div>
+    <div class="small">${mi?`Grown ${deltaHTML(mi.vsFirst)} since the first assessment — now ${fmt(mi.cum)} (${rankFor(mi.cum).name}).`:'Needs at least two assessments to measure growth.'}</div></div></div>`;
+  let naHTML='';
+  if(na){ const isDecl=na.reason==='decline';
+    naHTML=`<div class="callout co-warn"><div class="ic">${isDecl?'⚠️':'🎯'}</div><div><div class="tt">Needs attention</div>
+      <div class="mn">${esc(skillName(na.code))}</div>
+      <div class="small">${isDecl?`Dropped ${deltaHTML(na.vsPrev)} vs the previous test (now ${fmt(na.cum)}).`:`Lowest current mastery at ${fmt(na.cum)} (${rankFor(na.cum).name}) — a priority for support.`}</div></div></div>`; }
+
+  const assessList=arr.map(a=>{ const r0=a.results[sid],pc=a.fullTotal>0?r0.total/a.fullTotal*100:0,r=rankFor(pc);
+    const un=a.unmappedMarks?`<span class="wchip" style="border-color:#7d2c36;background:rgba(80,20,30,.4);color:#ffc4c9">⚠ ${n1(a.unmappedMarks)} unassigned</span>`:'';
+    return `<div class="assess-row"><div class="nm"><div>${esc(a.name)}</div>
+        <div class="tag"><span>${esc(a.form||'')} · ${esc(a.term||'')} · ${esc(a.year||'')}</span>${weightChips(a)}${un}</div>
         <div class="miniprog"><div style="height:100%;width:${Math.max(2,pc)}%;background:${r.raw}"></div></div></div>
-      <div class="sc">${Math.round(tot*10)/10}/${a.fullTotal}</div><div class="pc" style="color:${r.raw};font-weight:800">${fmt(pc)}</div></div>`; }).join('');
+      <div class="sc">${n1(r0.rawTotal!=null?r0.rawTotal:r0.total)}/${n1(a.rawFull||a.fullTotal)}</div>
+      <div class="pc" style="color:${r.raw};font-weight:800">${fmt(pc)}</div></div>`; }).join('');
   const remarkText=DB.remarks[sid]!=null?DB.remarks[sid]:autoComment(sid);
-  const legend=`<div class="legend"><span><span class="sw" style="background:#7c9cff"></span>${esc(st.name||'Student')}</span><span><span class="sw" style="background:#93a0bd"></span>Class average</span></div>`;
+
+  const legend=`<div class="legend"><span style="color:#3ce0ff"><span class="sw" style="background:#3ce0ff"></span>${esc(st.name||'Student')}</span>
+    <span style="color:#8ea4c9"><span class="sw" style="background:#8ea4c9"></span>Class average</span></div>`;
   const badgeHTML=achv.length?`<div class="badges">${achv.map(b=>`<span class="badge">${b.ic} ${esc(b.l)}</span>`).join('')}</div>`:'';
+
   document.getElementById('studentView').innerHTML=`
-    <div class="backbar"><button class="btn ghost" id="btnBack">← Back to class</button><span class="muted small">Character Stat Sheet</span></div>
-    <div class="hero" style="margin-bottom:14px"><div class="hero-top"><div class="avatar" style="background:${col}">${esc(ini)}</div>
-        <div><div class="hero-name">${esc(st.name||'(no name)')}</div><div class="hero-meta">${esc(st.classNo||'—')} · ${esc(st.sid)} · ${cohortLabel(st.sid)}</div></div>
-        <div class="levelbox"><div class="lv">RANK</div><div class="rk" style="color:${oRank.raw}">${oRank.name}</div><div class="av">${fmt(oAvg)}</div><div class="small" style="color:#b9c4ea">Lv.${oRank.lv} · analysis avg</div></div></div>
-      <div class="xpwrap"><div class="xpbar"><div class="xpfill" style="width:${xp.p}%"></div></div><div class="xplabel"><span>XP to next rank</span><span>${xp.next?('→ '+xp.next+' at '+xp.upper+'%'):'Max rank reached 👑'}</span></div></div>${badgeHTML}</div>
-    <div class="grid2"><div>
-        <div class="panel" style="margin-bottom:14px"><h3>Core Stats</h3>${aspectCards}</div>
-        <div class="panel" style="margin-bottom:14px"><h3>Skill Radar</h3><div class="radar-wrap">${radarSVG(sVals,ca)}${legend}</div></div>
-        <div class="panel"><h3>Aspect Trend Over Time</h3>${lineChartSVG(sid)}
-          <div class="legend">${ASPECTS.map(a=>`<span><span class="sw" style="background:${a.raw}"></span>${a.name}</span>`).join('')}</div></div></div>
+    <div class="backbar"><button class="btn ghost" id="btnBack">← Back to class</button>
+      <span class="muted small mono">CHARACTER STAT SHEET // ${esc(st.sid)}</span></div>
+
+    <div class="hero" style="margin-bottom:14px">
+      <div class="hero-top">
+        <div class="avatar" style="background:${col}">${esc(ini)}</div>
+        <div><div class="sysline"><i></i>System online · profile loaded</div>
+          <div class="hero-name">${esc(st.name||'(no name)')}</div>
+          <div class="hero-meta">${esc(st.classNo||'—')} · ${esc(st.sid)} · ${cohortLabel(st.sid)}</div></div>
+        <div class="levelbox"><div class="lv">RANK</div><div class="rk" style="color:${oRank.raw}">${oRank.name}</div>
+          <div class="av">${fmt(oAvg)}</div><div class="small mono" style="color:#a8bde8">Lv.${oRank.lv} · weighted avg</div></div>
+      </div>
+      <div class="xpwrap"><div class="xpbar"><div class="xpfill" style="width:${xp.p}%"></div></div>
+        <div class="xplabel"><span>XP TO NEXT RANK</span><span>${xp.next?('→ '+xp.next+' at '+xp.upper+'%'):'MAX RANK REACHED 👑'}</span></div></div>
+      ${badgeHTML}
+    </div>
+
+    <div class="grid2">
+      <div>
+        <div class="panel" style="margin-bottom:14px"><h3>Core Stats · four aspects</h3>${aspectCards}</div>
+        <div class="panel"><h3>Skill Radar</h3><div class="radar-wrap">${radarSVG(sVals,ca)}${legend}</div></div>
+      </div>
       <div>
         <div class="panel" style="margin-bottom:14px">${miHTML}${naHTML}</div>
-        ${confidenceOverviewHTML(sid)}
-        <div class="panel" style="margin-bottom:14px"><h3>Skill change vs previous assessment</h3>${skillChangeTableHTML(sid)}</div>
-        <div class="panel" style="margin-bottom:14px"><h3>Skill Tree (sub-skills)</h3>${skillTree||'<div class="muted small">No sub-skill data.</div>'}</div>
-        <div class="panel" style="margin-bottom:14px"><h3>Remark Panel</h3><div class="small muted" style="margin-bottom:6px">Stored assessments. Only records marked “Used in analysis” contribute to mastery, trend and skill change calculations.</div>
+        <div class="panel" style="margin-bottom:14px"><h3>Skill Tree · broad &amp; detailed tags</h3>${skillTree||'<div class="muted small">No sub-skill data.</div>'}</div>
+        <div class="panel" style="margin-bottom:14px"><h3>Remark Panel</h3>
+          <div class="small muted" style="margin-bottom:6px">Assessments sat (chronological · raw marks shown, % is weighted)</div>
           ${assessList||'<div class="muted small">No assessments.</div>'}
-          <div class="row-between" style="margin:12px 0 6px"><b>Analysis average</b><span style="font-weight:800;color:${oRank.raw}">${fmt(oAvg)} · Lv.${oRank.lv} ${oRank.name}</span></div>
-          <div class="row-between" style="margin-bottom:10px"><span class="small muted">Auto comment (editable — synced)</span><button class="btn ghost small" id="btnRegen">↻ Regenerate</button></div>
-          <textarea class="remark-area" id="remarkBox">${esc(remarkText)}</textarea></div>
-      </div></div>`;
+          <div class="row-between" style="margin:12px 0 6px"><b>Weighted overall average</b><span style="font-weight:800;color:${oRank.raw}">${fmt(oAvg)} · Lv.${oRank.lv} ${oRank.name}</span></div>
+          <div class="row-between" style="margin-bottom:10px"><span class="small muted">Auto comment (editable — saved automatically)</span>
+            <button class="btn ghost tiny" id="btnRegen">↻ Regenerate</button></div>
+          <textarea class="remark-area" id="remarkBox">${esc(remarkText)}</textarea>
+        </div>
+        <div class="panel"><h3>Aspect Trend Over Time</h3>${lineChartSVG(sid)}
+          <div class="legend">${ASPECTS.map(a=>`<span style="color:${a.raw}"><span class="sw" style="background:${a.raw}"></span>${a.name}</span>`).join('')}</div></div>
+      </div>
+    </div>`;
+
   document.getElementById('btnBack').onclick=()=>{ currentView='roster'; showView(); renderRoster(); };
-  const rb=document.getElementById('remarkBox'); let rt=null;
-  rb.addEventListener('input',()=>{ DB.remarks[sid]=rb.value; saveDB(); clearTimeout(rt); rt=setTimeout(()=>cloudUpsertRemark(sid,rb.value),800); });
-  document.getElementById('btnRegen').onclick=()=>{ const t=autoComment(sid); DB.remarks[sid]=t; rb.value=t; saveDB(); cloudUpsertRemark(sid,t); showToast('Comment regenerated'); };
-  wireConfidenceUI(sid);
+  const rb=document.getElementById('remarkBox');
+  rb.addEventListener('input',()=>{ DB.remarks[sid]=rb.value; saveDB(); });
+  document.getElementById('btnRegen').onclick=()=>{ const t=autoComment(sid); DB.remarks[sid]=t; rb.value=t; saveDB(); showToast('Comment regenerated'); };
 }
 
-function wireConfidenceUI(sid){
-  const add=document.getElementById('btnAddConfidence'), form=document.getElementById('confForm');
-  if(add&&form) add.onclick=()=>{ form.hidden=!form.hidden; if(!form.hidden) form.scrollIntoView({behavior:'smooth',block:'nearest'}); };
-  const cancel=document.getElementById('btnCancelConfidence');
-  if(cancel&&form) cancel.onclick=()=>{ form.hidden=true; };
-  document.querySelectorAll('.conf-slider').forEach(sl=>{
-    sl.addEventListener('input',()=>{ const n=sl.closest('.slider-row').querySelector('.conf-num'); if(n) n.textContent=sl.value; });
-  });
-  const save=document.getElementById('btnSaveConfidence');
-  if(save) save.onclick=()=>saveConfidenceCheck(sid);
-  document.querySelectorAll('[data-del-conf]').forEach(b=>{
-    b.onclick=async()=>{ const id=b.dataset.delConf; if(await showConfirm('Delete confidence check?','This confidence check will be removed for this student'+(CLOUD.status==='live'?' and synced to cloud.':'') )){
-      DB.confidence[sid]=confidenceEntries(sid).filter(e=>e.id!==id); saveDB(); cloudUpsertConfidence(sid); renderStudent(sid); showToast('Confidence check deleted'); } };
-  });
-}
-function saveConfidenceCheck(sid){
-  const title=document.getElementById('confTitle').value.trim()||'Pre-class confidence check';
-  const date=document.getElementById('confDate').value||todayISO();
-  const year=document.getElementById('confYear').value.trim();
-  const form=document.getElementById('confFormLevel').value;
-  const term=document.getElementById('confTerm').value.trim();
-  const seq=+document.getElementById('confSeq').value||confidenceEntries(sid).length+1;
-  const skills={};
-  document.querySelectorAll('.conf-slider[data-conf-code]').forEach(sl=>{ skills[sl.dataset.confCode]=+sl.value; });
-  const entry=normalizeConfidenceEntry({id:'conf_'+Date.now(),title,date,year,form,term,seq,createdAt:Date.now(),skills});
-  DB.confidence=DB.confidence||{}; DB.confidence[sid]=confidenceEntries(sid); DB.confidence[sid].push(entry);
-  saveDB(); cloudUpsertConfidence(sid); renderStudent(sid); showToast('Pre-class confidence check saved');
+function autoComment(sid){
+  const st=DB.students[sid],arr=studentAssessments(sid); if(!arr.length) return 'No assessment data recorded yet.';
+  const who=st.name||'This student';
+  const asp=ASPECTS.map(a=>({a,pct:cumulative(sid,a.key,'aspect')})).filter(x=>x.pct!=null).sort((x,y)=>y.pct-x.pct);
+  const parts=[];
+  if(asp.length){ const s=asp[0],w=asp[asp.length-1];
+    parts.push(asp.length>1?`${who} is strongest in ${s.a.name} (${Math.round(s.pct)}%) and finds ${w.a.name} (${Math.round(w.pct)}%) most challenging.`
+      :`${who} currently sits at ${Math.round(s.pct)}% in ${s.a.name}.`); }
+  const os=overallSeries(sid).filter(x=>x.pct!=null),ot=overallTrend(sid);
+  if(os.length>=2) parts.push(`Overall performance has been ${ot.label} since the first assessment (${Math.round(os[0].pct)}% → ${Math.round(os[os.length-1].pct)}%).`);
+  else parts.push(`This is the baseline assessment (${Math.round(os[0].pct)}%).`);
+  const mi=mostImproved(sid); if(mi) parts.push(`Most improved skill: ${skillName(mi.code)} (▲ +${Math.round(mi.vsFirst)}% since the start).`);
+  const dec=biggestDecline(sid); if(dec) parts.push(`Watch: ${skillName(dec.code)} declined (▼ ${Math.round(dec.vsPrev)}% vs the previous test).`);
+  const low=asp.filter(x=>x.pct<40).map(x=>x.a.name);
+  if(low.length) parts.push(`${low.join(' and ')} ${low.length>1?'are':'is'} below 40% (Novice) and need${low.length>1?'':'s'} targeted support.`);
+  const wt=arr.filter(a=>Math.abs(aWeight(a)-1)>1e-9);
+  if(wt.length) parts.push(`(Mastery figures are weighted — ${wt.map(a=>`${a.name} ×${n1(aWeight(a))}`).join(', ')}.)`);
+  const un=arr.reduce((s,a)=>s+(a.unmappedMarks||0),0);
+  if(un) parts.push(`Note: ${n1(un)} mark(s) are still unassigned to an aspect and excluded from these figures.`);
+  return parts.join(' ');
 }
 
-function autoComment(sid){ const st=DB.students[sid]; const arr=studentAssessments(sid); if(!arr.length) return 'No assessment data recorded yet.';
-  const who=st.name||'This student'; const asp=ASPECTS.map(a=>({a,pct:cumulative(sid,a.key,'aspect')})).filter(x=>x.pct!=null).sort((x,y)=>y.pct-x.pct); const parts=[];
-  if(asp.length){ const s=asp[0], w=asp[asp.length-1];
-    parts.push(asp.length>1?`${who} is strongest in ${s.a.name} (${Math.round(s.pct)}%) and finds ${w.a.name} (${Math.round(w.pct)}%) most challenging.`:`${who} currently sits at ${Math.round(s.pct)}% in ${s.a.name}.`); }
-  const os=overallSeries(sid).filter(x=>x.pct!=null); const ot=overallTrend(sid);
-  if(os.length>=2) parts.push(`Overall performance has been ${ot.label} since the first analysis record (${Math.round(os[0].pct)}% → ${Math.round(os[os.length-1].pct)}%).`);
-  else parts.push(`This is the baseline analysis record (${Math.round(os[0].pct)}%).`);
-  const mi=mostImproved(sid); if(mi) parts.push(`Most improved skill: ${SKILL_NAMES[mi.code]||mi.code} (▲ +${Math.round(mi.vsFirst)}% since the start).`);
-  const dec=biggestDecline(sid); if(dec) parts.push(`Watch: ${SKILL_NAMES[dec.code]||dec.code} declined (▼ ${Math.round(dec.vsPrev)}% vs the previous assessment).`);
-  const confs=ASPECTS.map(a=>({a,d:confidenceDeltas(confidenceSeriesForKey(sid,a.key,'aspect'))})).filter(x=>x.d.current!=null);
-  if(confs.length){ const low=confs.slice().sort((x,y)=>x.d.current-y.d.current)[0]; const up=confs.filter(x=>x.d.vsPrev!=null).sort((x,y)=>y.d.vsPrev-x.d.vsPrev)[0];
-    parts.push(`Latest self-confidence is lowest in ${low.a.name} (${confFmt(low.d.current)}).${up&&up.d.vsPrev>0?` Confidence improved most in ${up.a.name} (${confDeltaHTML(up.d.vsPrev).replace(/<[^>]*>/g,'')}).`:''}`); }
-  const low=asp.filter(x=>x.pct<40).map(x=>x.a.name); if(low.length) parts.push(`${low.join(' and ')} ${low.length>1?'are':'is'} below 40% (Novice) and need${low.length>1?'':'s'} targeted support.`);
-  return parts.join(' '); }
-
-/* ============================================================ VIEW ============================================================ */
+/* ============================================================
+   10 · VIEW SWITCH
+============================================================ */
 function showView(){ document.getElementById('rosterView').hidden=currentView!=='roster'; document.getElementById('studentView').hidden=currentView!=='student'; }
-function render(){ DB=normalizeDB(DB); document.getElementById('demoBanner').hidden=!DB.assessments.some(a=>a.demo); renderCloudPill();
+function render(){ document.getElementById('demoBanner').hidden=!DB.assessments.some(a=>a.demo);
+  renderAlerts();
   if(currentView==='student'&&currentSid&&DB.students[currentSid]){ showView(); renderStudent(currentSid); }
   else { currentView='roster'; showView(); renderRoster(); } }
 function openStudent(sid){ currentSid=sid; currentView='student'; showView(); renderStudent(sid); window.scrollTo({top:0,behavior:'smooth'}); }
 
-/* ============================================================ UPLOAD ============================================================ */
-function uploadIntroHTML(selectedType){
-  const cloudNote=CLOUD.status==='live'?'<div class="okbox">☁️ Connected — this import will be shared with all teachers.</div>':(CLOUD.cfg?'':'<div class="okbox" style="background:#152039;border-color:#26304d;color:#93a0bd">Local only — connect cloud storage to share with other teachers.</div>');
-  return `${cloudNote}
-    <div class="okbox" style="background:#152039;border-color:#26304d;color:#c4cef0">
-      <b>Updated analysis strategy:</b> Monthly Online MC Quiz records are kept as continuous skill evidence. Summative Assessment item analysis is used only for the latest ${SUMMATIVE_KEEP_TERMS} summative terms.
-    </div>
-    <div class="field"><label>Assessment type for this workbook</label>
-      <select id="uploadAssessType" style="width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:9px 11px;font-family:inherit">
-        ${typeOptionsHTML(selectedType)}
-      </select>
-      <div class="small muted" style="margin-top:5px">Each worksheet = one assessment. For MC quizzes, each question column should have a score, a skill code in the “type/skill” row, and max mark in the “Full” row.</div>
-    </div>`;
+/* ============================================================
+   11 · CODE SELECT BUILDER (shared by upload + mapping console)
+============================================================ */
+const CODE_CHOICES=[
+  {g:'🧠 Reasoning',o:[['R','R — Reasoning (broad)'],['R1','R1 — Inducing a trend/model'],['R2','R2 — Deducing from a model'],
+    ['R3','R3 — Inferring best explanation'],['R4','R4 — Deciding on probability']]},
+  {g:'⚗️ Experimenting',o:[['E','E — Experimenting (broad)'],['E1','E1 — Formulating a hypothesis'],['E2','E2 — Identifying variables'],
+    ['E3','E3 — Observation'],['E4','E4 — Accuracy & precision'],['E5','E5 — Controlled experiment design'],
+    ['E6','E6 — Choosing/improving method'],['E7','E7 — Reliability comment']]},
+  {g:'📊 Data processing',o:[['D','D — Data processing (broad)'],['D1','D1 — Notation, sig. figs & ratio'],['D2','D2 — Tables & graphs'],
+    ['D3','D3 — Scientific formulae'],['D4','D4 — Outliers & uncertainty']]},
+  {g:'📖 English',o:[['ENG','ENG — Scientific English']]},
+  {g:'⋯',o:[[IGNORE,'🚫 Ignore this tag (exclude entirely)']]},
+];
+function codeSelect(attrs,cur){
+  let h=`<select ${attrs}><option value="">— not assigned —</option>`;
+  CODE_CHOICES.forEach(grp=>{ h+=`<optgroup label="${grp.g}">`;
+    grp.o.forEach(([v,l])=>{ h+=`<option value="${v}" ${cur===v?'selected':''}>${esc(l)}</option>`; }); h+=`</optgroup>`; });
+  return h+`</select>`;
 }
-function openUpload(){ pending=null; document.getElementById('confirmImport').disabled=true;
-  document.getElementById('uploadBody').innerHTML=`${uploadIntroHTML(DEFAULT_ASSESSMENT_TYPE)}
-    <div class="dropzone" id="dropzone"><div style="font-size:34px">📄</div>
-      <div style="font-weight:700;margin:6px 0">Drop your .xlsx here, or click to browse</div>
-      <div class="small">The app reads SID, Name, Class, “type/skill” row and “Full” row automatically.</div></div>`;
-  document.getElementById('uploadModal').hidden=false; const dz=document.getElementById('dropzone');
+
+/* ============================================================
+   12 · UPLOAD FLOW (weighting + inline tag mapping)
+============================================================ */
+function openUpload(){
+  pending=null; document.getElementById('confirmImport').disabled=true;
+  document.getElementById('uploadStatus').textContent='';
+  document.getElementById('uploadBody').innerHTML=`
+    <div class="dropzone" id="dropzone">
+      <div style="font-size:34px">🛰️</div>
+      <div style="font-weight:700;margin:7px 0;letter-spacing:.6px">Drop your .xlsx here, or click to browse</div>
+      <div class="small">Each worksheet = one assessment. The app reads the <b class="mono">type</b> row (skill tags) and the <b class="mono">Full</b> row (max marks) automatically.</div>
+    </div>
+    <div class="note" style="margin-top:12px">
+      <b>Recognised skill tags</b><br>
+      <span class="mono" style="color:var(--R)">R</span> broad reasoning · <span class="mono" style="color:var(--R)">R1 R2 R3 R4</span> detailed<br>
+      <span class="mono" style="color:var(--E)">E</span> broad experimenting · <span class="mono" style="color:var(--E)">E1 … E7</span> detailed<br>
+      <span class="mono" style="color:var(--D)">D</span> broad data processing · <span class="mono" style="color:var(--D)">D1 … D4</span> detailed<br>
+      <span class="mono" style="color:var(--ENG)">ENG</span> scientific English<br>
+      Anything else is kept and can be hand-assigned in step 3 (or later in 🏷 Tag mapping).
+    </div>`;
+  document.getElementById('uploadModal').hidden=false;
+  const dz=document.getElementById('dropzone');
   dz.onclick=()=>document.getElementById('uploadFile').click();
   dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
   dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
-  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag'); if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); }); }
-async function handleFile(file){ const body=document.getElementById('uploadBody'); const selectedType=document.getElementById('uploadAssessType')?.value||DEFAULT_ASSESSMENT_TYPE;
-  body.innerHTML='<div class="muted">⏳ Parsing workbook…</div>';
-  try{ const buf=await file.arrayBuffer(); const {assessments,warnings}=parseWorkbook(buf); pending={assessments,warnings,assessmentType:selectedType,fileName:file.name}; renderUploadSummary(file.name); }
-  catch(e){ body.innerHTML=`<div class="warn">Could not read this file: ${esc(e.message||e)}. Make sure it is a valid .xlsx workbook.</div>`; } }
-function renderUploadSummary(fname){ const body=document.getElementById('uploadBody'); const {assessments,warnings}=pending; let nw=0,up=0;
-  const selectedType=pending.assessmentType||DEFAULT_ASSESSMENT_TYPE;
-  const items=assessments.map(p=>{ const exists=DB.assessments.some(a=>!a.demo&&(a.id===slug(p.name)||a.name.toLowerCase()===p.name.toLowerCase())); if(exists)up++; else nw++;
-    const codes=Object.keys(p.skillMax).length; const asp=ASPECTS.filter(a=>p.aspectMax[a.key]>0).map(a=>a.key).join(', ');
-    return `<div class="summary-item"><span class="pill ${exists?'upd':'new'}">${exists?'UPDATE':'NEW'}</span>
-      <div style="flex:1"><b>${esc(p.name)}</b><div class="small muted">${p.roster.length} students · ${codes} skill codes · full marks ${p.fullTotal} · aspects: ${asp||'—'}</div></div></div>`; }).join('');
-  const warnHTML=warnings.length?`<div class="warn"><b>${warnings.length} sheet(s) skipped:</b><br>${warnings.map(esc).join('<br>')}</div>`:'';
-  const cloudNote=CLOUD.status==='live'?'<div class="okbox">☁️ Will be saved to shared cloud storage.</div>':'';
-  body.innerHTML=`${uploadIntroHTML(selectedType)}
-    <div class="small muted" style="margin-bottom:8px">📁 ${esc(fname)}</div>${cloudNote}
-    <div style="margin-bottom:10px"><b>${assessments.length}</b> valid assessment sheet(s) · <span style="color:#7ff0b5">${nw} new</span> · <span style="color:#c3b6ff">${up} to update</span></div>
-    ${warnHTML}${items||'<div class="muted">No valid sheets found.</div>'}`;
-  document.getElementById('uploadAssessType').onchange=e=>{ pending.assessmentType=e.target.value; renderUploadSummary(fname); };
-  document.getElementById('confirmImport').disabled=assessments.length===0; }
-function confirmImport(){ if(!pending) return; purgeDemo(); let nw=0,up=0; const names=[];
-  pending.assessments.forEach(p=>{ const r=mergeAssessment(p,{assessmentType:pending.assessmentType}); r.status==='new'?nw++:up++; names.push(p.name); }); saveDB();
-  if(CLOUD.ready){ names.forEach(nm=>{ const a=DB.assessments.find(x=>x.id===slug(nm)); if(a) cloudUpsertAssessment(a); });
-    const roster={}; pending.assessments.forEach(p=>p.roster.forEach(s=>roster[s.sid]=DB.students[s.sid])); Object.values(roster).forEach(cloudUpsertStudent); }
-  document.getElementById('uploadModal').hidden=true; pending=null; render();
-  showToast(`Imported: ${nw} new, ${up} updated.${CLOUD.status==='live'?' Synced to cloud.':''}`); }
+  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag'); if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+}
+async function handleFile(file){
+  const body=document.getElementById('uploadBody'); body.innerHTML='<div class="muted mono">⏳ Parsing workbook…</div>';
+  try{
+    const buf=await file.arrayBuffer(); const r=parseWorkbook(buf);
+    pending={...r,file:file.name,map:{},cfg:r.parsed.map(p=>({
+      name:p.name,kind:guessKind(p.name),weight:KINDS.find(k=>k.key===guessKind(p.name)).w,aw:{R:100,E:100,D:100,ENG:100}}))};
+    renderUploadSummary();
+  }catch(e){ body.innerHTML=`<div class="warn">Could not read this file: ${esc(e.message||e)}. Make sure it is a valid .xlsx workbook.</div>`; }
+}
+function guessKind(name){
+  const s=String(name||'').toLowerCase();
+  if(/exam|summative|final|term test|期末|考試/.test(s)) return 'summative';
+  if(/chapter|unit test|chap|測驗/.test(s)) return 'chapter';
+  if(/quiz|小測/.test(s)) return 'quiz';
+  if(/practical|lab|實驗/.test(s)) return 'practical';
+  if(/homework|classwork|worksheet|hw/.test(s)) return 'classwork';
+  if(/diagnostic|pre-?test/.test(s)) return 'diagnostic';
+  return 'formative';
+}
+function pendingUnresolved(){
+  const m={};
+  pending.parsed.forEach(p=>p.items.forEach(it=>{
+    const k=tagKey(it.rawTag); if(!k) return;
+    if(normCode(it.rawTag)) return;
+    if((DB.tagMap||{})[k]) return;               // already mapped by teacher previously
+    if(!m[k]) m[k]={key:k,raw:it.rawTag,marks:0,items:0,sheets:new Set(),cols:[]};
+    m[k].marks+=it.full; m[k].items++; m[k].sheets.add(p.name); m[k].cols.push(it.label);
+  }));
+  return Object.values(m).sort((x,y)=>y.marks-x.marks);
+}
+function renderUploadSummary(){
+  const body=document.getElementById('uploadBody'),{parsed,warnings,notes,cfg}=pending;
+  let nw=0,up=0;
+  const cards=parsed.map((p,i)=>{
+    const exists=DB.assessments.some(a=>!a.demo&&a.name.toLowerCase()===(cfg[i].name||p.name).toLowerCase());
+    exists?up++:nw++;
+    const counts={}; p.items.forEach(it=>{ const c=resolveTag(it.rawTag)||'??'; counts[c]=(counts[c]||0)+it.full; });
+    const chips=Object.keys(counts).sort().map(c=>{ if(c==='??'||c===IGNORE)
+        return `<span class="cc ${c==='??'?'bad':''}" style="${c===IGNORE?'color:#8ea4c9;border-color:#2e4f86':''}">${c==='??'?'unassigned':'ignored'}·${n1(counts[c])}</span>`;
+      const col=ASPECT_RAW[aspectOf(c)];
+      return `<span class="cc" style="color:${col};border-color:${col}66;background:${col}14">${esc(c)}·${n1(counts[c])}</span>`; }).join('');
+    const kindOpts=KINDS.map(k=>`<option value="${k.key}" ${cfg[i].kind===k.key?'selected':''}>${k.icon} ${k.label} · ${k.w}%</option>`).join('');
+    const awCells=ASPECTS.map(a=>`<div class="wcell"><label style="color:${a.raw}">${a.icon} ${a.key} %</label>
+      <input data-cfg data-i="${i}" data-f="aw.${a.key}" type="number" min="0" max="500" step="5" value="${cfg[i].aw[a.key]}"></div>`).join('');
+    return `<div class="sheetcfg">
+      <div class="sh"><span class="pill ${exists?'upd':'new'}">${exists?'UPDATE':'NEW'}</span>
+        <b style="flex:1;min-width:150px">${esc(p.name)}</b>
+        <span class="small muted mono">${p.roster.length} students · raw full ${n1(p.rawFull)}${p.unknownTags?` · <span style="color:#ffc4c9">${p.unknownTags} unknown tag(s)</span>`:''}</span></div>
+      <div class="fgrid">
+        <div style="grid-column:span 2"><label>Assessment name</label><input data-cfg data-i="${i}" data-f="name" value="${esc(cfg[i].name)}"></div>
+        <div><label>Type / weight preset</label><select data-cfg data-i="${i}" data-f="kind">${kindOpts}</select></div>
+        <div><label>Weight (%)</label><input data-cfg data-i="${i}" data-f="weight" type="number" min="0" max="500" step="5" value="${cfg[i].weight}"></div>
+      </div>
+      <div class="small muted" style="margin-top:9px">Per-aspect weighting — each mark in that aspect counts this much toward the paper total</div>
+      <div class="wgrid">${awCells}</div>
+      <div class="codechips">${chips}</div>
+    </div>`; }).join('');
 
-/* ============================================================ MANAGE ============================================================ */
+  const unres=pendingUnresolved();
+  const unresHTML=unres.length?`
+    <div class="steptitle"><b>3</b> Assign unmatched tags to an aspect</div>
+    <div class="warn">${unres.length} tag(s) totalling <b>${n1(unres.reduce((s,x)=>s+x.marks,0))} marks</b> do not match the R / E / D / ENG scheme.
+      Assign them now, or import and fix later in 🏷 Tag mapping — unassigned marks are stored but excluded from the four aspects.</div>
+    <div style="margin-bottom:8px"><button class="btn ghost tiny" id="btnSuggestUp">⤳ Auto-suggest all</button></div>
+    ${unres.map(u=>{ const cur=pending.map[u.key]||'',sg=suggestCode(u.raw);
+      return `<div class="maprow ${cur?'done':''}">
+        <div class="lbl"><div class="raw">“${esc(u.raw)}”</div>
+          <div class="sub">${n1(u.marks)} marks · ${u.items} column(s) · ${esc([...u.sheets].join(', '))}</div>
+          <div class="sub">cols: ${esc(u.cols.slice(0,6).join(', '))}${u.cols.length>6?'…':''}</div></div>
+        ${sg&&!cur?`<span class="sug">⤳ suggest ${sg}</span>`:''}
+        ${codeSelect(`data-mapkey="${esc(u.key)}"`,cur)}
+      </div>`; }).join('')}`:
+    `<div class="steptitle"><b>3</b> Tag matching</div><div class="note">✔ Every tag in this workbook maps cleanly onto the four aspects.</div>`;
+
+  const warnHTML=warnings.length?`<div class="warn"><b>${warnings.length} sheet(s) skipped:</b><br>${warnings.map(esc).join('<br>')}</div>`:'';
+  const noteHTML=notes.length?`<div class="note"><b>Notes:</b><br>${notes.map(esc).join('<br>')}</div>`:'';
+
+  body.innerHTML=`
+    <div class="small muted mono">📁 ${esc(pending.file)} → <b>${parsed.length}</b> sheet(s) · <span style="color:#7ff0b5">${nw} new</span> · <span style="color:#c3b6ff">${up} update</span></div>
+    ${warnHTML}${noteHTML}
+    <div class="steptitle"><b>1·2</b> Sheets, weighting &amp; aspect emphasis
+      <button class="btn ghost tiny" id="btnApplyAll" style="margin-left:auto">⇊ Apply row 1 weighting to all</button>
+      <button class="btn ghost tiny" id="btnResetW">↺ Reset 100%</button></div>
+    ${cards}
+    ${unresHTML}`;
+  updateImportBtn();
+}
+function updateImportBtn(){
+  const unres=pendingUnresolved().filter(u=>!pending.map[u.key]).length;
+  document.getElementById('confirmImport').disabled=pending.parsed.length===0;
+  document.getElementById('uploadStatus').innerHTML=unres
+    ? `⚠ ${unres} tag(s) still unassigned — they will be stored but excluded until mapped.`
+    : `✔ ready · all tags resolved`;
+}
+function onUploadInput(e){
+  if(!pending) return;
+  const t=e.target;
+  if(t.hasAttribute&&t.hasAttribute('data-cfg')){
+    const i=+t.dataset.i,f=t.dataset.f,c=pending.cfg[i]; if(!c) return;
+    if(f==='name') c.name=t.value;
+    else if(f==='kind'){ c.kind=t.value; const k=KINDS.find(x=>x.key===t.value); if(k&&k.key!=='custom'){ c.weight=k.w; renderUploadSummary(); return; } }
+    else if(f==='weight'){ c.weight=Math.max(0,+t.value||0); if(!KINDS.some(k=>k.key===c.kind&&k.w===c.weight)) c.kind='custom'; }
+    else if(f.startsWith('aw.')) c.aw[f.slice(3)]=Math.max(0,+t.value||0);
+    return;
+  }
+  if(t.dataset&&t.dataset.mapkey!==undefined){
+    const k=t.dataset.mapkey; if(t.value) pending.map[k]=t.value; else delete pending.map[k];
+    t.closest('.maprow').classList.toggle('done',!!t.value); updateImportBtn(); return;
+  }
+}
+function confirmImport(){
+  if(!pending) return;
+  DB.tagMap=DB.tagMap||{};
+  Object.entries(pending.map).forEach(([k,v])=>{ if(v) DB.tagMap[k]=v; });
+  purgeDemo();
+  let nw=0,up=0;
+  pending.parsed.forEach((p,i)=>{ const r=mergeAssessment(p,pending.cfg[i]); r.status==='new'?nw++:up++; });
+  recomputeAll(); saveDB();
+  document.getElementById('uploadModal').hidden=true; pending=null; render();
+  showToast(`Imported: ${nw} new, ${up} updated.`);
+}
+
+/* ============================================================
+   13 · TAG MAPPING CONSOLE
+============================================================ */
+function openTagMap(){ renderTagMap(); document.getElementById('tagModal').hidden=false; }
+function renderTagMap(){
+  const body=document.getElementById('tagBody'),idx=unmappedIndex();
+  const manual=Object.entries(DB.tagMap||{});
+  const usage={}; (DB.assessments||[]).forEach(a=>(a.items||[]).forEach(it=>{
+    const k=tagKey(it.rawTag); if(!usage[k]) usage[k]={marks:0,sheets:new Set(),raw:it.rawTag}; usage[k].marks+=it.full; usage[k].sheets.add(a.name); }));
+
+  const unresHTML=idx.length?idx.map(u=>{ const sg=suggestCode(u.raw);
+    return `<div class="maprow">
+      <div class="lbl"><div class="raw">“${esc(u.raw)}”</div>
+        <div class="sub">${n1(u.marks)} marks · ${u.items} column(s) · ${esc([...u.sheets].join(', '))}</div></div>
+      ${sg?`<span class="sug">⤳ suggest ${sg}</span>`:''}
+      ${codeSelect(`data-tagkey="${esc(u.key)}"`,'')}
+    </div>`; }).join(''):'<div class="note">✔ Nothing unassigned — every tag in the database maps onto the four aspects.</div>';
+
+  const manHTML=manual.length?manual.map(([k,v])=>{
+    const u=usage[k]||{marks:0,sheets:new Set(),raw:k};
+    const col=v===IGNORE?'#8ea4c9':ASPECT_RAW[aspectOf(v)];
+    return `<div class="maprow done">
+      <div class="lbl"><div class="raw">“${esc(u.raw||k)}”</div>
+        <div class="sub">→ <b style="color:${col}">${v===IGNORE?'ignored':esc(v)+' · '+esc(skillName(v))}</b></div>
+        <div class="sub">${n1(u.marks)} marks · ${esc([...u.sheets].join(', '))||'not currently used'}</div></div>
+      ${codeSelect(`data-tagkey="${esc(k)}"`,v)}
+      <button class="btn ghost tiny" data-unmap="${esc(k)}">✕ unmap</button>
+    </div>`; }).join(''):'<div class="muted small">No manual mappings yet.</div>';
+
+  body.innerHTML=`
+    <div class="note">Assign any label your workbook used — a typo, a Chinese heading, a topic name — to one of the four aspects
+      (broad <b class="mono">R/E/D/ENG</b> or a detailed sub-skill). Every assessment is recalculated instantly and the mapping is
+      remembered for future uploads.</div>
+    <div class="steptitle"><b>⚠</b> Unassigned tags (${idx.length})</div>${unresHTML}
+    <div class="steptitle"><b>✔</b> Manual mappings (${manual.length})</div>${manHTML}`;
+}
+function applyTagChoice(key,val){
+  DB.tagMap=DB.tagMap||{};
+  if(val) DB.tagMap[key]=val; else delete DB.tagMap[key];
+  recomputeAll(); saveDB(); renderTagMap(); render();
+  showToast(val?(val===IGNORE?'Tag ignored':`Mapped → ${val}`):'Mapping removed');
+}
+
+/* ============================================================
+   14 · MANAGE ASSESSMENTS (timeline + weighting)
+============================================================ */
 function openManage(){ renderManage(); document.getElementById('manageModal').hidden=false; }
-function renderManage(){ const body=document.getElementById('manageBody'); const list=sortedAllAssessments(); const scope=analysisScopeSummary();
+function renderManage(){
+  const body=document.getElementById('manageBody'),list=sortedAssessments();
   if(!list.length){ body.innerHTML='<div class="muted">No assessments yet. Upload a workbook first.</div>'; return; }
-  body.innerHTML=`<div class="okbox" style="background:#152039;border-color:#26304d;color:#c4cef0">
-      <b>Analysis rule:</b> All Monthly Online MC Quiz records are used. Summative Assessment item analysis is used only for the latest <b>${SUMMATIVE_KEEP_TERMS}</b> summative terms.
-      Current analysis uses <b>${scope.included}</b> of <b>${scope.totalStored}</b> stored assessment record(s).
-    </div>
-    <div class="small muted" style="margin-bottom:10px">Edit Academic year / Form / Term / Sequence to control chronology. Assessment type affects whether the latest-three-term summative rule applies.${CLOUD.status==='live'?' Changes sync to all teachers.':''}</div>`
-    +list.map(a=>`<div class="manage-row" data-id="${esc(a.id)}"><div class="mn">${esc(a.name)} ${assessmentTypePill(a)} ${assessmentScopePill(a)} ${a.demo?'<span class="pill upd">sample</span>':''}</div>
+  body.innerHTML=`<div class="small muted" style="margin-bottom:11px">
+      Year / Form / Term / Sequence drive the chronological order used for trends and deltas.
+      <b>Weight</b> scales how much a paper counts toward cumulative mastery and the overall average;
+      <b>aspect %</b> scales each mark of that aspect inside the paper total.</div>`
+    +list.map(a=>{
+      const counts=a.skillMax||{};
+      const chips=Object.keys(counts).sort().map(c=>{ const col=ASPECT_RAW[aspectOf(c)];
+        return `<span class="cc" style="color:${col};border-color:${col}66;background:${col}14">${esc(c)}·${n1(counts[c])}</span>`; }).join('')
+        +(a.unmappedMarks?`<span class="cc bad">unassigned·${n1(a.unmappedMarks)}</span>`:'');
+      const kindOpts=KINDS.map(k=>`<option value="${k.key}" ${a.kind===k.key?'selected':''}>${k.icon} ${k.label}</option>`).join('');
+      const awCells=ASPECTS.map(x=>`<div class="wcell"><label style="color:${x.raw}">${x.key} %</label>
+        <input data-f="aw.${x.key}" type="number" min="0" max="500" step="5" value="${Math.round(awOf(a,x.key)*100)}"></div>`).join('');
+      return `<div class="manage-row" data-id="${a.id}">
+      <div class="mn">${esc(a.name)} ${a.demo?'<span class="pill upd">sample</span>':''}
+        ${a.unmappedMarks?`<span class="pill bad">⚠ ${n1(a.unmappedMarks)} unassigned</span>`:''}
+        ${a.manualCount?`<span class="chip man">${a.manualCount} manual tag</span>`:''}</div>
+      <div class="codechips" style="margin-bottom:9px">${chips}</div>
       <div class="mfields">
-        <div><label>Assessment type</label><select data-f="type">${typeOptionsHTML(a.type)}</select></div>
         <div><label>Academic year</label><input data-f="year" value="${esc(a.year||'')}"></div>
         <div><label>Form</label><select data-f="form">${['S1','S2','S3'].map(f=>`<option ${a.form===f?'selected':''}>${f}</option>`).join('')}</select></div>
         <div><label>Term</label><input data-f="term" value="${esc(a.term||'')}"></div>
         <div><label>Sequence</label><input data-f="seq" type="number" value="${a.seq||0}"></div>
-        <div><label>Analysis</label><label class="checkline"><input data-f="includeInMastery" type="checkbox" ${a.includeInMastery!==false?'checked':''}> Count in analysis</label></div>
+        <div><label>Type</label><select data-f="kind">${kindOpts}</select></div>
+        <div><label>Weight (%)</label><input data-f="weightPct" type="number" min="0" max="500" step="5" value="${Math.round(aWeight(a)*100)}"></div>
       </div>
-      <div class="manage-foot"><span class="small muted">${a.updatedBy?('updated by '+esc(a.updatedBy)):''}</span><button class="btn danger small" data-del="${esc(a.id)}">🗑 Delete</button></div></div>`).join(''); }
+      <div class="small muted" style="margin-top:9px">Per-aspect weighting inside this paper</div>
+      <div class="wgrid">${awCells}</div>
+      <div class="manage-foot">
+        <span class="small muted mono">raw full ${n1(a.rawFull)} → weighted ${n1(a.fullTotal)}</span>
+        <span style="display:flex;gap:7px">
+          ${a.unmappedMarks?'<button class="btn warnb tiny" data-map="1">🏷 Assign tags</button>':''}
+          <button class="btn danger tiny" data-del="${a.id}">🗑 Delete</button></span>
+      </div></div>`; }).join('');
+}
 
-/* ============================================================ MISC UI ============================================================ */
-function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2600); }
-function showConfirm(title,msg){ return new Promise(res=>{ document.getElementById('confirmTitle').textContent=title||'Please confirm';
-  document.getElementById('confirmMsg').textContent=msg||''; const m=document.getElementById('confirmModal'); m.hidden=false;
+/* ============================================================
+   15 · MISC UI
+============================================================ */
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2400); }
+function showConfirm(msg){ return new Promise(res=>{ document.getElementById('confirmMsg').textContent=msg; const m=document.getElementById('confirmModal'); m.hidden=false;
   document.getElementById('confirmYes').onclick=()=>{m.hidden=true;res(true);}; document.getElementById('confirmNo').onclick=()=>{m.hidden=true;res(false);}; }); }
-function exportJSON(){ try{ const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'}); const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob); a.download='sciquest-backup.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); showToast('Backup downloaded'); }
+function exportJSON(){ try{
+  const payload={...DB,_meta:{app:'SciQuest',v:3,exported:new Date().toISOString(),storage:Store.mode}};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='sciquest-backup-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000); showToast('Backup downloaded'); }
   catch(e){ showToast('Backup blocked in this sandbox — copy manually.'); } }
-async function importJSON(file){ try{ const txt=await file.text(); const d=normalizeDB(JSON.parse(txt));
-  if(!d||!d.assessments||!d.students){ showToast('Not a valid SciQuest backup'); return; } DB=d; saveDB(); currentView='roster'; render();
-  if(CLOUD.ready && await showConfirm('Push restored data to cloud?','This uploads the restored roster, assessments, remarks and confidence checks to the shared cloud, overwriting same-named entries.')){ cloudPushAll(); showToast('Data restored & pushed to cloud'); } else showToast('Data restored (local)'); }
+async function importJSON(file){ try{ const d=JSON.parse(await file.text());
+  if(!d||!d.assessments||!d.students){ showToast('Not a valid SciQuest backup'); return; }
+  d.remarks=d.remarks||{}; d.tagMap=d.tagMap||{}; DB=d; recomputeAll(); saveDB(); currentView='roster'; render(); showToast('Data restored'); }
   catch(e){ showToast('Could not read that file'); } }
 
-/* ============================================================ SAMPLE DATA ============================================================ */
+/* ============================================================
+   16 · SAMPLE DATA (item model · mixed tags · weighting demo)
+============================================================ */
 function seeded(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
-function loadDemo(){ DB=emptyDB();
-  const roster=[['A2026001','Chan Tai Man','1A-01'],['A2026002','Wong Mei Ling','1A-02'],['A2026003','Lee Chun Kit','1A-03'],
-    ['A2026004','Cheung Ka Yan','1A-04'],['A2026005','Ng Ho Yin','1A-05'],['A2026006','Lam Sze Wai','1A-06'],['A2026007','Tang Wai Lun','1A-07'],['A2026008','Fung Ka Ho','1A-08']];
-  roster.forEach(r=>DB.students[r[0]]={sid:r[0],name:r[1],classNo:r[2]});
-  const abil=[0.72,0.58,0.80,0.50,0.66,0.46,0.85,0.62]; const trend=[0.05,0.07,0.02,0.09,-0.035,0.10,0.01,0.045];
-  const bias=[{R:0.05,E:-0.05,D:0.0,ENG:0.08},{R:-0.10,E:0.05,D:0.10,ENG:-0.05},{R:0.10,E:0.05,D:-0.05,ENG:0.0},{R:-0.05,E:-0.10,D:0.05,ENG:0.10},
-    {R:0.0,E:0.10,D:-0.10,ENG:0.05},{R:-0.10,E:0.0,D:0.10,ENG:-0.10},{R:0.08,E:0.02,D:0.05,ENG:-0.02},{R:-0.02,E:0.08,D:-0.08,ENG:0.05}];
-  const prof={}; roster.forEach((r,i)=>prof[r[0]]={abil:abil[i],trend:trend[i],bias:bias[i]}); const rnd=seeded(20260924);
-  const defs=[
-    {name:'September Online MC Quiz — Force & Motion',type:'monthly_mc',year:'2026/27',form:'S1',term:'Term 1',skillMax:{R1:1,R2:1,R3:2,R4:1,E1:1,E2:1,E3:1,E4:1,E5:6,E6:4,E7:2,D1:5,D2:3,ENG:10}},
-    {name:'October Online MC Quiz — Acid & Alkali',type:'monthly_mc',year:'2026/27',form:'S1',term:'Term 1',skillMax:{R1:2,R2:1,R3:2,E2:2,E3:2,E5:5,E6:4,D1:3,D2:6,D3:4,ENG:10}},
-    {name:'Term 1 Summative Assessment — Cells & Human Body',type:'summative',year:'2026/27',form:'S1',term:'Term 1',skillMax:{R1:2,R2:2,R3:1,R4:2,E2:1,E3:3,E4:2,E7:4,D2:5,D3:3,D4:3,ENG:12}},
-    {name:'November Online MC Quiz — Energy',type:'monthly_mc',year:'2026/27',form:'S1',term:'Term 1',skillMax:{R1:1,R2:2,R4:1,E2:1,E4:2,E6:3,D1:2,D2:3,D3:4,ENG:8}}
+function loadDemo(){
+  const keepMap=DB.tagMap||{};
+  DB=emptyDB(); DB.tagMap={...keepMap};
+  const roster=[
+    ['A2026001','Chan Tai Man','1A-01'],['A2026002','Wong Mei Ling','1A-02'],['A2026003','Lee Chun Kit','1A-03'],
+    ['A2026004','Cheung Ka Yan','1A-04'],['A2026005','Ng Ho Yin','1A-05'],['A2026006','Lam Sze Wai','1A-06'],
+    ['A2026007','Tang Wai Lun','1A-07'],['A2026008','Fung Ka Ho','1A-08'],
   ];
-  defs.forEach((def,idx)=>{ const results={};
-    roster.forEach(r=>{ const sid=r[0]; if(idx===2&&sid==='A2026006') return; const p=prof[sid]; const skillEarned={},aspectEarned={}; let total=0;
-      Object.entries(def.skillMax).forEach(([code,mx])=>{ const a=aspectOf(code); let f=p.abil+(p.bias[a]||0)+p.trend*idx+(rnd()-0.5)*0.16; f=Math.max(0.05,Math.min(0.99,f));
-        let e=Math.max(0,Math.min(mx,Math.round(mx*f))); skillEarned[code]=e; aspectEarned[a]=(aspectEarned[a]||0)+e; total+=e; });
-      results[sid]={sid,name:DB.students[sid].name,classNo:DB.students[sid].classNo,skillEarned,aspectEarned,total}; });
-    const aspectMax={}; Object.entries(def.skillMax).forEach(([c,mx])=>{const a=aspectOf(c);aspectMax[a]=(aspectMax[a]||0)+mx;});
-    const fullTotal=Object.values(def.skillMax).reduce((s,v)=>s+v,0);
-    DB.assessments.push(normalizeAssessment({id:'demo'+idx,name:def.name,year:def.year,form:def.form,term:def.term,seq:idx+1,createdAt:Date.now()+idx,type:def.type,includeInMastery:true,
-      skillMax:def.skillMax,aspectMax,fullTotal,results,skillCodes:Object.keys(def.skillMax),demo:true})); });
-
-  roster.forEach((r,i)=>{
-    const sid=r[0]; DB.confidence[sid]=[];
-    for(let k=0;k<3;k++){
-      const skills={};
-      allSkillCodes().forEach(c=>{
-        const a=aspectOf(c); let raw=3+(prof[sid].abil-0.6)*2+(prof[sid].bias[a]||0)*2+k*prof[sid].trend*5+(rnd()-0.5);
-        raw=Math.max(1,Math.min(5,Math.round(raw)));
-        skills[c]=raw;
-      });
-      DB.confidence[sid].push(normalizeConfidenceEntry({
-        id:'demo_conf_'+sid+'_'+k,
-        title:['Pre-class check — Force & Motion','Pre-class check — Acid & Alkali','Pre-class check — Cells & Body'][k],
-        date:['2026-09-01','2026-10-01','2026-11-01'][k],
-        year:'2026/27',form:'S1',term:'Term 1',seq:k+1,createdAt:Date.now()+k,skills
-      }));
-    }
+  roster.forEach(r=>DB.students[r[0]]={sid:r[0],name:r[1],classNo:r[2]});
+  const abil=[0.72,0.58,0.80,0.50,0.66,0.46,0.85,0.62];
+  const trend=[0.05,0.07,0.02,0.09,-0.035,0.10,0.01,0.045];
+  const bias=[{R:0.05,E:-0.05,D:0.0,ENG:0.08},{R:-0.10,E:0.05,D:0.10,ENG:-0.05},{R:0.10,E:0.05,D:-0.05,ENG:0.0},
+    {R:-0.05,E:-0.10,D:0.05,ENG:0.10},{R:0.0,E:0.10,D:-0.10,ENG:0.05},{R:-0.10,E:0.0,D:0.10,ENG:-0.10},
+    {R:0.08,E:0.02,D:0.05,ENG:-0.02},{R:-0.02,E:0.08,D:-0.08,ENG:0.05}];
+  const prof={}; roster.forEach((r,i)=>prof[r[0]]={abil:abil[i],trend:trend[i],bias:bias[i]});
+  const rnd=seeded(20260924);
+  const defs=[
+    {name:'Force & Motion Chapter Test',form:'S1',term:'Term 1',kind:'chapter',w:1.5,
+     tags:{R1:1,R2:1,R3:2,R4:1,E1:1,E2:1,E3:1,E4:1,E5:14,E6:7,E7:5,D1:6,ENG:20}},
+    {name:'Acid & Alkali Chapter Test',form:'S1',term:'Term 1',kind:'chapter',w:1.5,
+     tags:{R1:2,R2:1,R3:2,E2:2,E3:2,E5:8,E6:5,D1:3,D2:6,D3:4,ENG:15}},
+    {name:'Cells & Human Body Test',form:'S1',term:'Term 2',kind:'formative',w:1,
+     tags:{R1:2,R2:2,R3:1,R4:2,E2:1,E3:3,E4:2,E7:4,D2:5,D3:3,D4:3,ENG:12}},
+    /* broad-tag MC quiz + one deliberately mis-typed tag to demo the mapping console */
+    {name:'Force & Motion MC Quiz (broad tags)',form:'S1',term:'Term 2',kind:'quiz',w:1,
+     tags:{R:3,E:3,D:1,ENG:3,'Reasnoing':2}},
+    /* summative exam ×2 with Experimenting emphasised 150% */
+    {name:'S1 Term 2 Summative Exam',form:'S1',term:'Term 2',kind:'summative',w:2,aw:{R:100,E:150,D:100,ENG:100},
+     tags:{R:6,R1:3,R3:3,E:4,E5:10,E7:4,D:3,D2:6,D4:3,ENG:18}},
+  ];
+  defs.forEach((def,idx)=>{
+    const items=[],scores={}; let k=0;
+    Object.entries(def.tags).forEach(([tag,mx])=>items.push({id:'d'+idx+'_'+(k++),label:tag,rawTag:tag,full:mx}));
+    roster.forEach(r=>{ const sid=r[0]; if(idx===2&&sid==='A2026006') return; /* absent example */
+      const p=prof[sid],o={};
+      items.forEach(it=>{ const code=normCode(it.rawTag),a=code?aspectOf(code):'R';
+        let f=p.abil+(p.bias[a]||0)+p.trend*idx+(rnd()-0.5)*0.16; f=Math.max(0.05,Math.min(0.99,f));
+        o[it.id]=Math.max(0,Math.min(it.full,Math.round(it.full*f))); });
+      scores[sid]=o; });
+    const aw={R:1,E:1,D:1,ENG:1}; if(def.aw) ASPECTS.forEach(x=>aw[x.key]=(def.aw[x.key]||100)/100);
+    const a={id:'demo'+idx,name:def.name,year:'2026/27',form:def.form,term:def.term,seq:idx+1,createdAt:Date.now()+idx,
+      kind:def.kind,weight:def.w,aspectWeights:aw,items,scores,demo:true};
+    recomputeAssessment(a); DB.assessments.push(a);
   });
-  DB=normalizeDB(DB); saveDB(); }
+  recomputeAll();
+}
 
-/* ============================================================ WIRING ============================================================ */
+/* ============================================================
+   17 · WIRING
+============================================================ */
 function wire(){
   document.getElementById('hintClose').onclick=()=>document.getElementById('hint').remove();
   document.getElementById('search').addEventListener('input',renderRosterList);
   document.getElementById('sortby').addEventListener('change',renderRosterList);
   document.getElementById('rosterList').addEventListener('click',e=>{ const c=e.target.closest('[data-sid]'); if(c) openStudent(c.dataset.sid); });
-  document.getElementById('cloudPill').onclick=openCloud;
+
+  /* upload */
   document.getElementById('btnUpload').onclick=openUpload;
   document.getElementById('uploadFile').addEventListener('change',e=>{ if(e.target.files[0]) handleFile(e.target.files[0]); e.target.value=''; });
   document.getElementById('confirmImport').onclick=confirmImport;
+  const ub=document.getElementById('uploadBody');
+  ub.addEventListener('input',onUploadInput);
+  ub.addEventListener('change',onUploadInput);
+  ub.addEventListener('click',e=>{
+    if(!pending) return;
+    if(e.target.id==='btnApplyAll'){ const f=pending.cfg[0]; pending.cfg.forEach(c=>{ c.kind=f.kind; c.weight=f.weight; c.aw={...f.aw}; }); renderUploadSummary(); showToast('Weighting applied to all sheets'); }
+    if(e.target.id==='btnResetW'){ pending.cfg.forEach(c=>{ c.weight=100; c.kind='custom'; c.aw={R:100,E:100,D:100,ENG:100}; }); renderUploadSummary(); }
+    if(e.target.id==='btnSuggestUp'){ let n=0; pendingUnresolved().forEach(u=>{ const s=suggestCode(u.raw); if(s&&!pending.map[u.key]){ pending.map[u.key]=s; n++; } });
+      renderUploadSummary(); showToast(n?`${n} tag(s) auto-suggested — please verify`:'No confident suggestions'); }
+  });
+
+  /* manage */
   document.getElementById('btnManage').onclick=openManage;
-  document.getElementById('manageBody').addEventListener('change',e=>{ const row=e.target.closest('[data-id]'); const f=e.target.dataset.f; if(!row||!f) return;
+  const mb=document.getElementById('manageBody');
+  mb.addEventListener('change',e=>{
+    const row=e.target.closest('[data-id]'),f=e.target.dataset.f; if(!row||!f) return;
     const a=DB.assessments.find(x=>x.id===row.dataset.id); if(!a) return;
-    if(f==='seq') a[f]=(+e.target.value||0);
-    else if(f==='includeInMastery') a[f]=!!e.target.checked;
+    if(f==='seq') a.seq=+e.target.value||0;
+    else if(f==='weightPct') a.weight=Math.max(0,(+e.target.value||0)/100);
+    else if(f==='kind'){ a.kind=e.target.value; const k=KINDS.find(x=>x.key===a.kind); if(k&&k.key!=='custom') a.weight=k.w/100; }
+    else if(f.startsWith('aw.')){ a.aspectWeights=a.aspectWeights||{}; a.aspectWeights[f.slice(3)]=Math.max(0,(+e.target.value||0)/100); }
     else a[f]=e.target.value;
-    normalizeAssessment(a); saveDB(); cloudUpsertAssessment(a); render(); if(!document.getElementById('manageModal').hidden) renderManage(); });
-  document.getElementById('manageBody').addEventListener('click',async e=>{ const id=e.target.dataset.del; if(!id) return; const a=DB.assessments.find(x=>x.id===id); if(!a) return;
-    if(await showConfirm('Delete assessment','Delete “'+a.name+'”? Past results in it will be removed'+(CLOUD.status==='live'?' for all teachers':'')+'.')){
-      DB.assessments=DB.assessments.filter(x=>x.id!==id); saveDB(); if(CLOUD.ready&&!a.demo) cloudDeleteAssessment(id); renderManage(); render(); showToast('Assessment deleted'); } });
+    recomputeAssessment(a); saveDB(); renderManage(); render();
+  });
+  mb.addEventListener('click',async e=>{
+    if(e.target.dataset.map){ document.getElementById('manageModal').hidden=true; openTagMap(); return; }
+    const id=e.target.dataset.del; if(!id) return;
+    const a=DB.assessments.find(x=>x.id===id);
+    if(await showConfirm(`Delete assessment “${a.name}”? Past results in it will be removed.`)){
+      DB.assessments=DB.assessments.filter(x=>x.id!==id); saveDB(); renderManage(); render(); showToast('Assessment deleted'); }
+  });
+
+  /* tag mapping console */
+  const tb=document.getElementById('tagBody');
+  tb.addEventListener('change',e=>{ const k=e.target.dataset.tagkey; if(k===undefined) return; applyTagChoice(k,e.target.value); });
+  tb.addEventListener('click',e=>{ const k=e.target.dataset.unmap; if(k!==undefined) applyTagChoice(k,''); });
+  document.getElementById('btnSuggestAll').onclick=()=>{
+    const idx=unmappedIndex(); let n=0;
+    idx.forEach(u=>{ const s=suggestCode(u.raw); if(s){ DB.tagMap[u.key]=s; n++; } });
+    if(n){ recomputeAll(); saveDB(); renderTagMap(); render(); showToast(`${n} tag(s) auto-suggested — please verify`); }
+    else showToast('No confident suggestions');
+  };
+
+  /* menu */
   const more=document.getElementById('morePop');
   document.getElementById('btnMore').onclick=e=>{ e.stopPropagation(); more.hidden=!more.hidden; };
-  document.addEventListener('click',()=>more.hidden=true); more.addEventListener('click',e=>e.stopPropagation());
-  document.getElementById('btnCloud').onclick=()=>{ more.hidden=true; openCloud(); };
-  document.getElementById('btnDemo').onclick=()=>{ more.hidden=true; if(CLOUD.status==='live'){ showToast('Disconnect cloud to view local sample data.'); return; } loadDemo(); currentView='roster'; render(); showToast('Sample data loaded'); };
+  document.addEventListener('click',()=>more.hidden=true);
+  more.addEventListener('click',e=>e.stopPropagation());
+  document.getElementById('btnTagMap').onclick=()=>{ more.hidden=true; openTagMap(); };
+  document.getElementById('btnDemo').onclick=()=>{ more.hidden=true; loadDemo(); saveDB(); currentView='roster'; render(); showToast('Sample data loaded'); };
   document.getElementById('btnExport').onclick=()=>{ more.hidden=true; exportJSON(); };
   document.getElementById('btnImport').onclick=()=>{ more.hidden=true; document.getElementById('importFile').click(); };
   document.getElementById('importFile').addEventListener('change',e=>{ if(e.target.files[0]) importJSON(e.target.files[0]); e.target.value=''; });
-  document.getElementById('btnClear').onclick=async()=>{ more.hidden=true; if(await showConfirm('Clear local cache','Clear the local cached copy on this device? '+(CLOUD.status==='live'?'It will immediately re-sync from the cloud (cloud data is NOT deleted).':'This removes the roster, assessments, remarks and confidence checks stored in this browser.'))){
-    DB=emptyDB(); try{localStorage.removeItem('sq_db');}catch(e){} if(CLOUD.status==='live'){ CLOUD._lastSig=null; cloudAssemble(); } else { try{localStorage.setItem('sq_cleared','1');}catch(e){} currentView='roster'; render(); } showToast('Local cache cleared'); } };
+  document.getElementById('btnClear').onclick=async()=>{ more.hidden=true;
+    if(await showConfirm('Delete ALL stored data (roster + every assessment + tag mappings)? This cannot be undone.')){
+      DB=emptyDB(); await Store.del('main'); await Store.set('flags',{cleared:true});
+      try{ localStorage.removeItem('sq_db'); }catch(e){}
+      storeChip('ok'); currentView='roster'; render(); showToast('All data cleared'); } };
+
   document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{ b.closest('.overlay').hidden=true; });
   document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{ if(e.target===o) o.hidden=true; }));
   document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.overlay').forEach(o=>o.hidden=true); });
 }
 
-/* ============================================================ INIT ============================================================ */
-document.addEventListener('DOMContentLoaded',()=>{ wire();
-  const stored=loadDB(); const haveCfg=!!loadCloudCfg();
-  if(stored){ DB=stored; }
-  else { let cleared=false; try{ cleared=!!localStorage.getItem('sq_cleared'); }catch(e){} if(!haveCfg&&!cleared) loadDemo(); else DB=emptyDB(); }
-  DB=normalizeDB(DB);
-  render(); initCloud();
+/* ============================================================
+   18 · INIT (async · IndexedDB + migration)
+============================================================ */
+document.addEventListener('DOMContentLoaded',async()=>{
+  wire();
+  await Store.init(); storeChip('ok');
+  let stored=await Store.get('main');
+  const flags=await Store.get('flags')||{};
+  let migrated=false;
+  if(!stored){ /* migrate legacy localStorage payload */
+    try{ const legacy=localStorage.getItem('sq_db');
+      if(legacy){ const d=JSON.parse(legacy); if(d&&d.assessments){ stored=d; migrated=true; } } }catch(e){}
+  }
+  if(stored){ DB=stored; DB.remarks=DB.remarks||{}; DB.tagMap=DB.tagMap||{}; DB.students=DB.students||{}; DB.assessments=DB.assessments||[]; }
+  else { DB=emptyDB(); let cleared=!!flags.cleared; try{ cleared=cleared||!!localStorage.getItem('sq_cleared'); }catch(e){} if(!cleared) loadDemo(); }
+  recomputeAll();
+  render();
+  if(migrated){ saveDB(); showToast('Migrated your data into IndexedDB'); }
+  else if(Store.mode==='memory') showToast('Storage unavailable here — use Backup (JSON)');
+  const {tags}=unmappedTotals();
+  if(tags) setTimeout(()=>showToast(`${tags} unmatched tag(s) waiting in 🏷 Tag mapping`),900);
 });
 </script>
 </body>
