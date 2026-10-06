@@ -327,6 +327,24 @@ main{max-width:1516px;margin:0 auto 0 76px;padding:24px 32px 20px;min-height:85v
 .table-student-link{background:transparent;border:0;color:var(--text);padding:0;text-align:left;font:inherit;cursor:pointer;text-decoration:underline;text-decoration-color:#527782;text-underline-offset:4px;min-height:28px}
 .progress-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;flex-wrap:wrap}.progress-toolbar .small{font-size:10px}
 :root[lang="zh-Hant"] .mission-copy h1{letter-spacing:-1px;line-height:1.17}:root[lang="zh-Hant"] .mission-copy p{line-height:1.9}
+
+@media print{
+ @page{size:A4;margin:12mm}
+ body{background:#fff!important;color:#111!important;font-family:Arial,"Microsoft JhengHei",sans-serif!important;font-size:10pt}
+ body::before,body::after,.topbar,.flight-rail,.hint,.banner,.mission-hero,.workspace-footer,#rosterView,.backbar,.btn,.storechip,.toast,.overlay{display:none!important}
+ main{max-width:none!important;margin:0!important;padding:0!important}
+ #studentView{display:block!important}
+ .hero,.panel,.aspect,.callout,.progress-card{background:#fff!important;color:#111!important;border:1px solid #999!important;box-shadow:none!important}
+ .hero,.panel{break-inside:avoid}.hero{padding:12px!important}.panel{padding:11px!important;margin-bottom:10px!important}
+ .grid2{display:block!important}.aspect{padding:8px!important;margin-bottom:6px!important}
+ .aspect-pct,.hero-name,.levelbox .rk,.levelbox .av,.skill .rp{color:#111!important}
+ .muted,.small,.classavg,.hero-meta,.hero .sysline,.dlabel,.smeta,.tag{color:#444!important}
+ .bar,.mbt,.xpbar,.comparison-track{background:#eee!important;border-color:#777!important}
+ .barf,.mbf,.xpfill,.comparison-track span{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-shadow:none!important}
+ .radar-wrap svg,.panel svg{max-width:100%;height:auto}.assess-row{border-color:#aaa!important}
+ textarea.remark-area{background:#fff!important;color:#111!important;border:1px solid #777!important;min-height:80px}
+ .progress-grid{grid-template-columns:repeat(4,1fr)!important}
+}
 </style>
 </head>
 <body>
@@ -1051,6 +1069,7 @@ function renderStudent(sid){
 
   document.getElementById('studentView').innerHTML=`
     <div class="backbar"><button class="btn ghost" id="btnBack">← Back to class</button>
+      <button class="btn ghost" id="btnPrintProfile">🖨 Print / PDF</button>
       <button class="btn ghost" id="btnEditStudent">✎ Edit student / marks</button>
       <span class="muted small mono">CHARACTER STAT SHEET // ${esc(st.sid)}</span></div>
 
@@ -1091,6 +1110,7 @@ function renderStudent(sid){
     </div>`;
 
   document.getElementById('btnBack').onclick=()=>{ currentView='roster'; showView(); renderRoster(); };
+  document.getElementById('btnPrintProfile').onclick=()=>printStudentProfilePDF(sid);
   document.getElementById('btnEditStudent').onclick=()=>openEditor(null,sid);
   const rb=document.getElementById('remarkBox');
   rb.addEventListener('input',()=>{ DB.remarks[sid]=rb.value; saveDB(); });
@@ -1863,6 +1883,16 @@ autoComment=function(sid){
  const decline=biggestDecline(sid);if(decline)parts.push('需要關注：'+translateUI(skillName(decline.code))+'較上次下降 '+n1(Math.abs(decline.vsPrev))+' 個百分點。');
  const un=arr.reduce((s,a)=>s+(a.unmappedMarks||0),0);if(un)parts.push('注意：有 '+n1(un)+' 分尚未分類，未計入能力掌握度。');return parts.join(' ');
 };
+
+function printStudentProfilePDF(sid){
+  const student=DB.students&&DB.students[sid];
+  if(!student){showToast('Student profile is not available');return;}
+  const oldTitle=document.title;
+  const safeName=String(student.name||sid).replace(/[^\w\-\u4e00-\u9fff ]+/g,'').trim()||sid;
+  document.title='SciQuest Profile - '+safeName;
+  window.print();
+  setTimeout(()=>{document.title=oldTitle;},1200);
+}
 
 </script>
 </body>
